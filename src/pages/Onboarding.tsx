@@ -51,8 +51,11 @@ export default function Onboarding() {
     }
     setSubmitting(true);
     try {
+      console.log('[Onboarding] user:', user?.id, user?.email);
+      console.log('[Onboarding] form:', form);
+
       // Step 1 — save to Supabase
-      await createClient.mutateAsync({
+      const result = await createClient.mutateAsync({
         business_name: form.business_name,
         organization_name: form.organization_name,
         card_name: form.card_name,
@@ -61,24 +64,31 @@ export default function Onboarding() {
         primary_color: form.primary_color,
         pass2u_model_id: MODEL_ID,
       });
+      console.log('[Onboarding] client created:', result);
 
       // Step 2 — update Pass2U model (non-blocking)
       try {
         await updateModel({ name: form.card_name, description: form.reward_description });
-      } catch {
-        // non-blocking
+      } catch (pass2uErr) {
+        console.warn('[Onboarding] Pass2U update failed (non-blocking):', pass2uErr);
       }
 
       // Step 3 — redirect
       toast.success('Votre carte est prête! 🎉');
       navigate('/card');
     } catch (err) {
-      const msg = err instanceof Error ? err.message : '';
-      if (msg.includes('duplicate') || msg.includes('unique')) {
+      console.error('[Onboarding] FULL ERROR:', err);
+      console.error('[Onboarding] error message:', err instanceof Error ? err.message : String(err));
+      console.error('[Onboarding] error details:', JSON.stringify(err, null, 2));
+
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes('duplicate') || msg.includes('unique') || msg.includes('23505')) {
         toast.error('Un profil existe déjà pour ce compte.');
         navigate('/');
+      } else if (msg.includes('violates row-level security') || msg.includes('42501')) {
+        toast.error(`Erreur de permission: ${msg}`);
       } else {
-        toast.error('Une erreur est survenue. Réessayez.');
+        toast.error(`Erreur: ${msg || 'Une erreur est survenue. Réessayez.'}`);
       }
     } finally {
       setSubmitting(false);

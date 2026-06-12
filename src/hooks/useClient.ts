@@ -11,19 +11,22 @@ export function useClient() {
     queryKey: ['client', user?.id],
     queryFn: async () => {
       if (!user) return null;
+      console.log('[useClient] fetching client for user:', user.id);
       const { data, error } = await supabase
         .from('clients')
         .select('*')
         .eq('id', user.id)
         .maybeSingle();
-      // maybeSingle returns null (not error) when no row found
-      if (error) throw error;
+      if (error) {
+        console.error('[useClient] fetch error:', error);
+        throw error;
+      }
+      console.log('[useClient] result:', data);
       return (data as Client) ?? null;
     },
     enabled: !!user,
   });
 
-  // true once the query has completed at least once (success or error)
   const clientChecked = isFetched;
 
   const updateClient = useMutation({
@@ -35,7 +38,10 @@ export function useClient() {
         .eq('id', user.id)
         .select()
         .single();
-      if (error) throw error;
+      if (error) {
+        console.error('[useClient] update error:', error);
+        throw new Error(error.message);
+      }
       return data as Client;
     },
     onSuccess: () => {
@@ -46,12 +52,31 @@ export function useClient() {
   const createClient = useMutation({
     mutationFn: async (newClient: Partial<Client>) => {
       if (!user) throw new Error('Non authentifié');
+
+      const email = user.email;
+      if (!email) throw new Error('Email utilisateur introuvable');
+
+      console.log('[useClient] creating client:', { id: user.id, email, ...newClient });
+
+      // Use upsert so re-submitting the form doesn't fail on duplicate
       const { data, error } = await supabase
         .from('clients')
-        .insert({ ...newClient, id: user.id, email: user.email })
+        .upsert(
+          { ...newClient, id: user.id, email },
+          { onConflict: 'id' }
+        )
         .select()
         .single();
-      if (error) throw error;
+
+      if (error) {
+        console.error('[useClient] create error code:', error.code);
+        console.error('[useClient] create error message:', error.message);
+        console.error('[useClient] create error details:', error.details);
+        console.error('[useClient] create error hint:', error.hint);
+        throw new Error(`${error.message} (code: ${error.code})`);
+      }
+
+      console.log('[useClient] client created successfully:', data);
       return data as Client;
     },
     onSuccess: () => {
