@@ -1,0 +1,61 @@
+import { NavLink } from 'react-router-dom';
+import { LayoutDashboard, Camera, CreditCard, Users, Bell, Settings } from 'lucide-react';
+
+const navItems = [
+  { to: '/', icon: LayoutDashboard, label: 'Tableau de bord', exact: true },
+  { to: '/scanner', icon: Camera, label: 'Scanner' },
+  { to: '/card', icon: CreditCard, label: 'Ma carte' },
+  { to: '/members', icon: Users, label: 'Membres' },
+  { to: '/notifications', icon: Bell, label: 'Notifications' },
+  { to: '/settings', icon: Settings, label: 'Paramètres' },
+];
+
+export function Sidebar() {
+  return (
+    <aside
+      className="flex flex-col h-full"
+      style={{ width: '260px', minWidth: '260px', background: '#1E3932' }}
+    >
+      {/* Logo */}
+      <div className="px-6 py-6 border-b border-white/10">
+        <div className="flex items-center gap-3">
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm"
+            style={{ background: '#00704A' }}
+          >
+            W
+          </div>
+          <span className="text-white font-semibold text-base" style={{ fontFamily: '"Playfair Display", serif' }}>
+            WalletPass Pro
+          </span>
+        </div>
+      </div>
+
+      {/* Nav */}
+      <nav className="flex-1 px-3 py-4 space-y-1">
+        {navItems.map(({ to, icon: Icon, label, exact }) => (
+          <NavLink
+            key={to}
+            to={to}
+            end={exact}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
+                isActive
+                  ? 'bg-matcha text-white'
+                  : 'text-white/70 hover:text-white hover:bg-white/10'
+              }`
+            }
+          >
+            <Icon size={18} />
+            {label}
+          </NavLink>
+        ))}
+      </nav>
+
+      {/* Footer */}
+      <div className="px-6 py-4 border-t border-white/10">
+        <p className="text-white/30 text-xs">© 2026 WalletPass Pro</p>
+      </div>
+    </aside>
+  );
+}
