@@ -4,7 +4,7 @@ export interface Client {
   business_name: string;
   logo_url: string | null;
   primary_color: string;
-  pass2u_model_id: string;
+  google_wallet_class_id: string | null;
   card_name: string;
   organization_name: string | null;
   total_stamps: number;
@@ -19,10 +19,13 @@ export interface Member {
   last_name: string;
   email: string;
   pass_id: string | null;
+  google_wallet_object_id: string | null;
   punches: number;
   reward_available: boolean;
   status: string;
   joined_at: string;
+  email_consent: boolean;
+  email_consent_at: string | null;
 }
 
 export interface Punch {
