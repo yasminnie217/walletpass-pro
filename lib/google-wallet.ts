@@ -230,7 +230,7 @@ export async function generateSaveUrl(objectParams: LoyaltyObjectParams): Promis
     iat: Math.floor(Date.now() / 1000),
     origins: [
       // On autorise les origines connues — à étendre si domaine custom
-      'walletpass-pro.vercel.app',
+      'walletpass-pro2.vercel.app',
       'localhost:3000',
     ],
     payload: {
