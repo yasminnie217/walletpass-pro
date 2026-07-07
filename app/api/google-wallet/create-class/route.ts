@@ -54,7 +54,8 @@ export async function POST(req: Request) {
     const e = err as { response?: { status: number; data: unknown }; message?: string };
 
     // 409 = classe déjà existante → idempotent, on met quand même à jour la colonne
-    if (e.response?.status === 409 && clientId) {
+    const status = e.response?.status ?? (e as unknown as Record<string,unknown>).status;
+    if (status === 409 && clientId) {
       const classId = buildClassId(clientId);
       const supabase = getSupabase();
       await supabase
