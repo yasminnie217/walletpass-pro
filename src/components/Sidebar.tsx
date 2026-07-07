@@ -1,16 +1,21 @@
-import { NavLink } from 'react-router-dom';
+'use client';
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Camera, CreditCard, Users, Bell, Settings } from 'lucide-react';
 
 const navItems = [
-  { to: '/', icon: LayoutDashboard, label: 'Tableau de bord', exact: true },
-  { to: '/scanner', icon: Camera, label: 'Scanner' },
-  { to: '/card', icon: CreditCard, label: 'Ma carte' },
-  { to: '/members', icon: Users, label: 'Membres' },
-  { to: '/notifications', icon: Bell, label: 'Notifications' },
-  { to: '/settings', icon: Settings, label: 'Paramètres' },
+  { href: '/', icon: LayoutDashboard, label: 'Tableau de bord', exact: true },
+  { href: '/scanner', icon: Camera, label: 'Scanner' },
+  { href: '/card', icon: CreditCard, label: 'Ma carte' },
+  { href: '/members', icon: Users, label: 'Membres' },
+  { href: '/notifications', icon: Bell, label: 'Notifications' },
+  { href: '/settings', icon: Settings, label: 'Paramètres' },
 ];
 
 export function Sidebar() {
+  const pathname = usePathname();
+
   return (
     <aside
       className="flex flex-col h-full"
@@ -33,23 +38,23 @@ export function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-1">
-        {navItems.map(({ to, icon: Icon, label, exact }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={exact}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
+        {navItems.map(({ href, icon: Icon, label, exact }) => {
+          const isActive = exact ? pathname === href : pathname.startsWith(href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
                 isActive
                   ? 'bg-matcha text-white'
                   : 'text-white/70 hover:text-white hover:bg-white/10'
-              }`
-            }
-          >
-            <Icon size={18} />
-            {label}
-          </NavLink>
-        ))}
+              }`}
+            >
+              <Icon size={18} />
+              {label}
+            </Link>
+          );
+        })}
       </nav>
 
       {/* Footer */}

@@ -1,6 +1,3 @@
 {
-  "rewrites": [
-    { "source": "/api/public/pass2u-webhook", "destination": "/api/pass2u-webhook" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
-  ]
+  "installCommand": "npm install --legacy-peer-deps"
 }
