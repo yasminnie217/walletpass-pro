@@ -1,4 +1,4 @@
-import { createSign } from 'crypto';
+import { SignJWT, importPKCS8 } from 'jose';
 import { loadServiceAccountKey, getWalletConfig } from './google-wallet-credentials';
 
 const WALLET_API = 'https://walletobjects.googleapis.com/walletobjects/v1';
@@ -29,21 +29,13 @@ export interface UpdateObjectParams {
   state?: 'ACTIVE' | 'INACTIVE' | 'EXPIRED';
 }
 
-// ─── JWT signing (RS256, crypto natif) ───────────────────────────────────────
+// ─── JWT signing (RS256, via jose / WebCrypto — évite ERR_OSSL_UNSUPPORTED) ──
 
-function b64url(input: string | Buffer): string {
-  const buf = typeof input === 'string' ? Buffer.from(input, 'utf-8') : input;
-  return buf.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-}
-
-function signJwt(payload: unknown, privateKey: string): string {
-  const header = b64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
-  const body = b64url(JSON.stringify(payload));
-  const signingInput = `${header}.${body}`;
-  const signer = createSign('RSA-SHA256');
-  signer.update(signingInput);
-  const sig = b64url(signer.sign(privateKey));
-  return `${signingInput}.${sig}`;
+async function signJwt(payload: Record<string, unknown>, privateKeyPem: string): Promise<string> {
+  const privateKey = await importPKCS8(privateKeyPem, 'RS256');
+  return new SignJWT(payload)
+    .setProtectedHeader({ alg: 'RS256', typ: 'JWT' })
+    .sign(privateKey);
 }
 
 // ─── Auth (sans google-auth-library) ─────────────────────────────────────────
@@ -52,7 +44,7 @@ async function getAccessToken(): Promise<string> {
   const key = loadServiceAccountKey();
   const now = Math.floor(Date.now() / 1000);
 
-  const assertion = signJwt(
+  const assertion = await signJwt(
     {
       iss: key.client_email,
       sub: key.client_email,
@@ -226,7 +218,7 @@ export async function generateSaveUrl(objectParams: LoyaltyObjectParams): Promis
     payload: { loyaltyObjects: [loyaltyObject] },
   };
 
-  const token = signJwt(claims, key.private_key);
+  const token = await signJwt(claims, key.private_key);
   return `https://pay.google.com/gp/v/save/${token}`;
 }
 
