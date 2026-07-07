@@ -1,16 +1,20 @@
-import { useNavigate } from 'react-router-dom';
-import { Users, Stamp, CreditCard, Gift, LogOut } from 'lucide-react';
+'use client';
+
+import { useRouter } from 'next/navigation';
+import { Users, Stamp, CreditCard, Gift, LogOut, Link2, Copy, Check } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { useAuth } from '../hooks/useAuth';
-import { useClient } from '../hooks/useClient';
-import { useMembers } from '../hooks/useMembers';
-import { usePunches } from '../hooks/usePunches';
-import { Sidebar } from '../components/Sidebar';
-import { StatCard } from '../components/StatCard';
-import { getInitials, timeAgo } from '../lib/utils';
+import { useAuth } from '@/src/hooks/useAuth';
+import { useClient } from '@/src/hooks/useClient';
+import { useMembers } from '@/src/hooks/useMembers';
+import { usePunches } from '@/src/hooks/usePunches';
+import { Sidebar } from '@/src/components/Sidebar';
+import { StatCard } from '@/src/components/StatCard';
+import { getInitials, timeAgo } from '@/src/lib/utils';
+import { toast } from 'sonner';
+import { useState, useEffect } from 'react';
 
 export default function Dashboard() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { user, signOut } = useAuth();
   const { client } = useClient();
   const { members } = useMembers();
@@ -18,7 +22,7 @@ export default function Dashboard() {
 
   const handleSignOut = async () => {
     await signOut();
-    navigate('/login');
+    router.push('/login');
   };
 
   const totalMembers = members.length;
@@ -29,6 +33,16 @@ export default function Dashboard() {
   const initials = user?.email ? user.email.substring(0, 2).toUpperCase() : 'WP';
 
   const recentPunches = punches.slice(0, 10);
+  const [origin, setOrigin] = useState('');
+  const [copied, setCopied] = useState(false);
+  useEffect(() => { setOrigin(window.location.origin); }, []);
+  const joinUrl = `${origin}/join/${user?.id}`;
+  const copyJoinLink = () => {
+    navigator.clipboard.writeText(joinUrl);
+    setCopied(true);
+    toast.success('Lien copié!');
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ fontFamily: '"Inter", sans-serif' }}>
@@ -80,7 +94,7 @@ export default function Dashboard() {
               >
                 Bienvenue, {firstName}
               </h1>
-              <p className="text-mist mt-1">Voici ce qui se passe aujourd'hui.</p>
+              <p className="text-mist mt-1">{"Voici ce qui se passe aujourd'hui."}</p>
             </div>
             <span
               className="px-3 py-1 rounded-full text-xs font-semibold"
@@ -96,6 +110,28 @@ export default function Dashboard() {
             <StatCard title="Tampons aujourd'hui" value={todayCount} icon={Stamp} color="#CBA258" />
             <StatCard title="Cartes actives" value={activeMembers} icon={CreditCard} />
             <StatCard title="Récompenses prêtes" value={rewardsReady} icon={Gift} color="#CBA258" />
+          </div>
+
+          {/* Invite banner */}
+          <div className="bg-white rounded-xl p-5 shadow-sm mb-8 flex items-center gap-4">
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: '#00704A15' }}
+            >
+              <Link2 size={18} style={{ color: '#00704A' }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-ink font-medium text-sm">Lien d&apos;inscription client</p>
+              <p className="text-mist text-xs truncate">{joinUrl}</p>
+            </div>
+            <button
+              onClick={copyJoinLink}
+              className="flex items-center gap-2 px-4 py-2 rounded-full text-white text-sm font-medium transition-all hover:opacity-90 flex-shrink-0"
+              style={{ background: copied ? '#CBA258' : '#00704A' }}
+            >
+              {copied ? <Check size={14} /> : <Copy size={14} />}
+              {copied ? 'Copié!' : 'Copier'}
+            </button>
           </div>
 
           {/* Chart + Feed */}

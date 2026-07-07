@@ -1,11 +1,12 @@
+'use client';
+
 import { useState } from 'react';
 import { Send, Bell, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useNotifications } from '../hooks/useNotifications';
-import { useMembers } from '../hooks/useMembers';
-import { Sidebar } from '../components/Sidebar';
-import { NotificationItem } from '../components/NotificationItem';
-import { sendPushNotification } from '../lib/pass2u';
+import { useNotifications } from '@/src/hooks/useNotifications';
+import { useMembers } from '@/src/hooks/useMembers';
+import { Sidebar } from '@/src/components/Sidebar';
+import { NotificationItem } from '@/src/components/NotificationItem';
 
 export default function Notifications() {
   const { notifications, isLoading, sendNotification } = useNotifications();
@@ -14,7 +15,7 @@ export default function Notifications() {
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
 
-  const recipientsCount = members.filter(m => m.status === 'active' && m.pass_id).length;
+  const recipientsCount = members.filter(m => m.status === 'active' && m.google_wallet_object_id).length;
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,26 +25,17 @@ export default function Notifications() {
     }
     setSending(true);
     try {
-      let pass2uResp = '';
-      try {
-        const resp = await sendPushNotification(title, message);
-        pass2uResp = JSON.stringify(resp);
-      } catch (err) {
-        pass2uResp = err instanceof Error ? err.message : 'Erreur';
-      }
-
       await sendNotification.mutateAsync({
         title,
         message,
         recipientsCount,
-        pass2uResponse: pass2uResp,
       });
 
       toast.success(`Notification envoyée à ${recipientsCount} membre(s).`);
       setTitle('');
       setMessage('');
     } catch {
-      toast.error('Erreur lors de l\'envoi de la notification.');
+      toast.error("Erreur lors de l'envoi de la notification.");
     } finally {
       setSending(false);
     }
@@ -111,7 +103,6 @@ export default function Notifications() {
           <div className="bg-white rounded-xl p-6 shadow-sm">
             <h2 className="text-ink font-semibold mb-4">Aperçu</h2>
             <div className="flex justify-center">
-              {/* Phone mockup */}
               <div
                 className="w-64 rounded-3xl p-3 shadow-xl"
                 style={{ background: '#1a1a1a' }}

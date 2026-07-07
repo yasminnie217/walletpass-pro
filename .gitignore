@@ -30,6 +30,10 @@ dist-ssr
 .vercel
 .env*
 
+# Next.js build output
+.next/
+tsconfig.tsbuildinfo
+
 # Google Wallet service account keys — never commit
 service-account.json
 *-service-account.json

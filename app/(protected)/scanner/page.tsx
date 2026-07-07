@@ -1,13 +1,13 @@
+'use client';
+
 import { useState, useEffect, useRef } from 'react';
 import { ScanLine, CheckCircle, Loader2, Camera } from 'lucide-react';
 import { toast } from 'sonner';
-import { Html5Qrcode } from 'html5-qrcode';
-import { supabase } from '../lib/supabase';
-import { addPunch as pass2uAddPunch } from '../lib/pass2u';
-import { useAuth } from '../hooks/useAuth';
-import { useClient } from '../hooks/useClient';
-import { Sidebar } from '../components/Sidebar';
-import type { Member } from '../types';
+import { supabase } from '@/src/lib/supabase';
+import { useAuth } from '@/src/hooks/useAuth';
+import { useClient } from '@/src/hooks/useClient';
+import { Sidebar } from '@/src/components/Sidebar';
+import type { Member } from '@/src/types';
 
 type ScanState = 'idle' | 'scanning' | 'loading' | 'result';
 
@@ -24,7 +24,9 @@ export default function Scanner() {
   const [result, setResult] = useState<ScanResult | null>(null);
   const [manualId, setManualId] = useState('');
   const [cooldown, setCooldown] = useState(0);
-  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const [redeeming, setRedeeming] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const scannerRef = useRef<any>(null);
   const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const totalStamps = client?.total_stamps || 5;
@@ -34,6 +36,7 @@ export default function Scanner() {
       stopScanner();
       if (cooldownRef.current) clearInterval(cooldownRef.current);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const stopScanner = async () => {
@@ -52,6 +55,7 @@ export default function Scanner() {
     setState('scanning');
     await new Promise(r => setTimeout(r, 100));
 
+    const { Html5Qrcode } = await import('html5-qrcode');
     const scanner = new Html5Qrcode('qr-reader');
     scannerRef.current = scanner;
 
@@ -59,7 +63,7 @@ export default function Scanner() {
       await scanner.start(
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 250, height: 250 } },
-        async (decodedText) => {
+        async (decodedText: string) => {
           await stopScanner();
           await processPassId(decodedText);
         },
@@ -67,7 +71,7 @@ export default function Scanner() {
       );
     } catch {
       setState('idle');
-      toast.error('Impossible d\'accéder à la caméra.');
+      toast.error("Impossible d'accéder à la caméra.");
     }
   };
 
@@ -76,15 +80,29 @@ export default function Scanner() {
     setState('loading');
     try {
       const cleanId = passId.trim();
-      const { data: member, error } = await supabase
+
+      // QR Google Wallet = memberId (UUID). On cherche d'abord par id, puis pass_id (legacy).
+      let member: Member | null = null;
+      const { data: byId } = await supabase
         .from('members')
         .select('*')
         .eq('client_id', user.id)
-        .eq('pass_id', cleanId)
+        .eq('id', cleanId)
         .maybeSingle();
+      member = byId as Member | null;
 
-      if (error || !member) {
-        toast.error('Membre introuvable. Vérifiez le pass ID.');
+      if (!member) {
+        const { data: byPassId } = await supabase
+          .from('members')
+          .select('*')
+          .eq('client_id', user.id)
+          .eq('pass_id', cleanId)
+          .maybeSingle();
+        member = byPassId as Member | null;
+      }
+
+      if (!member) {
+        toast.error('Membre introuvable. Vérifiez le QR code.');
         setState('idle');
         return;
       }
@@ -98,8 +116,15 @@ export default function Scanner() {
         .update({ punches: newPunches, reward_available: rewardReady })
         .eq('id', member.id);
 
-      if (member.pass_id) {
-        try { await pass2uAddPunch(member.pass_id); } catch { /* non-blocking */ }
+      // Met à jour la carte Google Wallet (non-bloquant)
+      if (member.google_wallet_object_id) {
+        try {
+          await fetch('/api/google-wallet/add-punch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ memberId: member.id }),
+          });
+        } catch { /* non-blocking */ }
       }
 
       setResult({ member, newPunches, rewardReady });
@@ -132,6 +157,24 @@ export default function Scanner() {
     setManualId('');
   };
 
+  const handleRedeem = async () => {
+    if (!result) return;
+    setRedeeming(true);
+    try {
+      await supabase
+        .from('members')
+        .update({ punches: 0, reward_available: false })
+        .eq('id', result.member.id);
+      toast.success(`Récompense utilisée pour ${result.member.first_name}. Carte remise à zéro!`);
+      setResult(null);
+      setState('idle');
+    } catch {
+      toast.error('Erreur lors de la réinitialisation.');
+    } finally {
+      setRedeeming(false);
+    }
+  };
+
   const resetScanner = () => {
     setResult(null);
     setState('idle');
@@ -147,7 +190,7 @@ export default function Scanner() {
               <ScanLine size={28} style={{ color: '#00704A' }} />
               Scanner
             </h1>
-            <p className="text-mist mt-1">Scannez la carte d'un membre pour ajouter un tampon.</p>
+            <p className="text-mist mt-1">{"Scannez la carte d'un membre pour ajouter un tampon."}</p>
           </div>
 
           {/* Camera viewport */}
@@ -156,7 +199,6 @@ export default function Scanner() {
               className="relative flex items-center justify-center"
               style={{ minHeight: '300px', background: '#0a0a0a' }}
             >
-              {/* QR reader container */}
               <div id="qr-reader" className="w-full" style={{ display: state === 'scanning' ? 'block' : 'none' }} />
 
               {state !== 'scanning' && (
@@ -166,7 +208,6 @@ export default function Scanner() {
                 </div>
               )}
 
-              {/* Corner brackets overlay */}
               {state === 'scanning' && (
                 <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
                   <div className="relative w-56 h-56">
@@ -188,7 +229,6 @@ export default function Scanner() {
             </div>
           </div>
 
-          {/* Scan button */}
           {state === 'idle' && (
             <button
               onClick={startScanner}
@@ -209,7 +249,6 @@ export default function Scanner() {
             </button>
           )}
 
-          {/* Result card */}
           {state === 'result' && result && (
             <div className="bg-white rounded-xl shadow-sm p-6 mb-4">
               <div className="flex items-center gap-3 mb-4">
@@ -225,7 +264,6 @@ export default function Scanner() {
                 </div>
               </div>
 
-              {/* Progress bar */}
               <div className="mb-4">
                 <div className="flex justify-between text-sm mb-1.5">
                   <span className="text-mist">Progression</span>
@@ -245,11 +283,22 @@ export default function Scanner() {
               </div>
 
               {result.rewardReady ? (
-                <div
-                  className="flex items-center gap-2 p-3 rounded-xl text-sm font-semibold"
-                  style={{ background: '#CBA25820', color: '#CBA258' }}
-                >
-                  🎉 Récompense disponible!
+                <div className="space-y-3">
+                  <div
+                    className="flex items-center gap-2 p-3 rounded-xl text-sm font-semibold"
+                    style={{ background: '#CBA25820', color: '#CBA258' }}
+                  >
+                    🎉 Récompense disponible!
+                  </div>
+                  <button
+                    onClick={handleRedeem}
+                    disabled={redeeming}
+                    className="w-full py-3 rounded-full text-white font-medium text-sm flex items-center justify-center gap-2 transition-all hover:opacity-90 disabled:opacity-60"
+                    style={{ background: '#CBA258' }}
+                  >
+                    {redeeming ? <Loader2 size={16} className="animate-spin" /> : '🎁'}
+                    Marquer la récompense comme utilisée
+                  </button>
                 </div>
               ) : (
                 <div
@@ -272,15 +321,14 @@ export default function Scanner() {
             </div>
           )}
 
-          {/* Manual fallback */}
           <div className="bg-white rounded-xl shadow-sm p-5">
-            <p className="text-mist text-sm mb-3">Ou saisir le pass ID manuellement</p>
+            <p className="text-mist text-sm mb-3">Ou saisir l&apos;ID membre manuellement</p>
             <form onSubmit={handleManual} className="flex gap-2">
               <input
                 type="text"
                 value={manualId}
                 onChange={e => setManualId(e.target.value)}
-                placeholder="Pass ID…"
+                placeholder="ID membre…"
                 className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-matcha/30"
                 style={{ fontFamily: '"JetBrains Mono", monospace' }}
               />

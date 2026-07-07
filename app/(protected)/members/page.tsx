@@ -10,7 +10,6 @@ import { useAuth } from '@/src/hooks/useAuth';
 import { Sidebar } from '@/src/components/Sidebar';
 import { MemberRow } from '@/src/components/MemberRow';
 import type { Member } from '@/src/types';
-import { addPunch as pass2uAddPunch } from '@/src/lib/pass2u';
 import { exportToCSV } from '@/src/lib/utils';
 
 export default function Members() {

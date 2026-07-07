@@ -1,16 +1,19 @@
+'use client';
+
 import { useState, useEffect } from 'react';
-import { Save, Loader2, LogOut, Copy } from 'lucide-react';
+import { Save, Loader2, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
-import { useClient } from '../hooks/useClient';
-import { useAuth } from '../hooks/useAuth';
-import { Sidebar } from '../components/Sidebar';
+import { useRouter } from 'next/navigation';
+import { useClient } from '@/src/hooks/useClient';
+import { useAuth } from '@/src/hooks/useAuth';
+import { Sidebar } from '@/src/components/Sidebar';
 
 export default function Settings() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { user, signOut } = useAuth();
   const { client, updateClient } = useClient();
   const [saving, setSaving] = useState(false);
+  const [origin, setOrigin] = useState('');
 
   const [form, setForm] = useState({
     business_name: '',
@@ -18,6 +21,10 @@ export default function Settings() {
     logo_url: '',
     primary_color: '#00704A',
   });
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
 
   useEffect(() => {
     if (client) {
@@ -29,8 +36,6 @@ export default function Settings() {
       });
     }
   }, [client]);
-
-  const webhookUrl = `${window.location.origin}/api/public/pass2u-webhook`;
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,12 +56,7 @@ export default function Settings() {
 
   const handleSignOut = async () => {
     await signOut();
-    navigate('/login');
-  };
-
-  const copyWebhook = () => {
-    navigator.clipboard.writeText(webhookUrl);
-    toast.success('URL copiée!');
+    router.push('/login');
   };
 
   return (
@@ -74,7 +74,7 @@ export default function Settings() {
             <h2 className="text-ink font-semibold text-base mb-4">Compte</h2>
             <form onSubmit={handleSave} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-ink mb-1.5">Nom de l'entreprise</label>
+                <label className="block text-sm font-medium text-ink mb-1.5">{"Nom de l'entreprise"}</label>
                 <input
                   type="text"
                   value={form.business_name}
@@ -83,7 +83,7 @@ export default function Settings() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-ink mb-1.5">Courriel d'affaires</label>
+                <label className="block text-sm font-medium text-ink mb-1.5">{"Courriel d'affaires"}</label>
                 <input
                   type="email"
                   value={form.email}
@@ -145,49 +145,6 @@ export default function Settings() {
                 <p className="text-ink font-medium text-sm">{client?.business_name || 'Mon Commerce'}</p>
                 <p className="text-mist text-sm">{user?.email}</p>
               </div>
-            </div>
-          </div>
-
-          {/* Pass2U integration */}
-          <div className="bg-white rounded-xl p-6 shadow-sm">
-            <h2 className="text-ink font-semibold text-base mb-2">Intégration Pass2U</h2>
-            <p className="text-mist text-sm mb-4">
-              Configurez cette URL dans le tableau de bord Pass2U → Webhook pour recevoir les événements
-              en temps réel (pass créé, tampon ajouté).
-            </p>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-ink mb-1.5">URL du webhook Pass2U</label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  readOnly
-                  value={webhookUrl}
-                  className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-xs bg-cream text-mist"
-                  style={{ fontFamily: '"JetBrains Mono", monospace' }}
-                />
-                <button
-                  onClick={copyWebhook}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-gray-200 text-sm font-medium text-ink hover:bg-cream transition-all"
-                >
-                  <Copy size={14} />
-                  Copier
-                </button>
-              </div>
-            </div>
-            <div
-              className="rounded-xl px-4 py-3 text-sm"
-              style={{ background: '#1E393210', border: '1px solid #1E393230' }}
-            >
-              <p className="font-medium text-ink mb-1">Pour tester en local</p>
-              <p className="text-mist text-xs mb-2">
-                Exposez votre serveur local avec ngrok, puis collez l'URL ngrok dans Pass2U.
-              </p>
-              <code
-                className="block text-xs px-3 py-2 rounded-lg text-ink"
-                style={{ background: '#1E3932', color: '#F9F6F0', fontFamily: '"JetBrains Mono", monospace' }}
-              >
-                npx ngrok http 5173
-              </code>
             </div>
           </div>
 

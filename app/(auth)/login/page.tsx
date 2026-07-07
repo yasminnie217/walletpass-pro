@@ -1,15 +1,18 @@
+'use client';
+
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/src/lib/supabase';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 
 export default function Login() {
-  const navigate = useNavigate();
-  const [tab, setTab] = useState<'login' | 'signup'>('login');
+  const router = useRouter();
+  const [tab, setTab] = useState<'login' | 'signup' | 'forgot'>('login');
   const [loading, setLoading] = useState(false);
 
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
+  const [forgotEmail, setForgotEmail] = useState('');
   const [signupForm, setSignupForm] = useState({ business_name: '', email: '', password: '' });
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -21,8 +24,8 @@ export default function Login() {
         password: loginForm.password,
       });
       if (error) throw error;
-      navigate('/');
-    } catch (err: unknown) {
+      router.push('/');
+    } catch {
       toast.error('Identifiants incorrects. Veuillez réessayer.');
     } finally {
       setLoading(false);
@@ -37,20 +40,16 @@ export default function Login() {
     }
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email: signupForm.email,
         password: signupForm.password,
+        options: {
+          data: { business_name: signupForm.business_name },
+        },
       });
       if (error) throw error;
-      if (data.user) {
-        await supabase.from('clients').insert({
-          id: data.user.id,
-          email: signupForm.email,
-          business_name: signupForm.business_name,
-        });
-      }
-      toast.success('Compte créé! Vérifiez votre courriel.');
-      setTab('login');
+      // Redirect to onboarding — the client row will be created there with all required fields
+      router.push('/onboarding');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '';
       if (msg.includes('already registered')) {
@@ -65,6 +64,24 @@ export default function Login() {
 
   const handleGoogle = async () => {
     await supabase.auth.signInWithOAuth({ provider: 'google' });
+  };
+
+  const handleForgot = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotEmail) { toast.error('Entrez votre courriel.'); return; }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+        redirectTo: `${window.location.origin}/login`,
+      });
+      if (error) throw error;
+      toast.success('Courriel de réinitialisation envoyé!');
+      setTab('login');
+    } catch {
+      toast.error('Une erreur est survenue. Réessayez.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -93,21 +110,57 @@ export default function Login() {
         {/* Card */}
         <div className="bg-white rounded-2xl shadow-sm p-6">
           {/* Tabs */}
-          <div className="flex rounded-full bg-cream p-1 mb-6">
-            {(['login', 'signup'] as const).map((t) => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={`flex-1 py-2 rounded-full text-sm font-medium transition-all ${
-                  tab === t ? 'bg-white shadow-sm text-ink' : 'text-mist'
-                }`}
-              >
-                {t === 'login' ? 'Connexion' : 'Créer un compte'}
-              </button>
-            ))}
-          </div>
+          {tab !== 'forgot' && (
+            <div className="flex rounded-full bg-cream p-1 mb-6">
+              {(['login', 'signup'] as const).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setTab(t)}
+                  className={`flex-1 py-2 rounded-full text-sm font-medium transition-all ${
+                    tab === t ? 'bg-white shadow-sm text-ink' : 'text-mist'
+                  }`}
+                >
+                  {t === 'login' ? 'Connexion' : 'Créer un compte'}
+                </button>
+              ))}
+            </div>
+          )}
 
-          {tab === 'login' ? (
+          {tab === 'forgot' ? (
+            <form onSubmit={handleForgot} className="space-y-4">
+              <div className="text-center mb-2">
+                <p className="text-ink font-semibold">Réinitialiser le mot de passe</p>
+                <p className="text-mist text-sm mt-1">Entrez votre courriel et nous vous enverrons un lien.</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink mb-1.5">Courriel</label>
+                <input
+                  type="email"
+                  value={forgotEmail}
+                  onChange={e => setForgotEmail(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-matcha/30 focus:border-matcha transition-all"
+                  placeholder="vous@exemple.com"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-2.5 rounded-full text-white font-medium text-sm flex items-center justify-center gap-2 transition-all hover:opacity-90 disabled:opacity-60"
+                style={{ background: '#00704A' }}
+              >
+                {loading && <Loader2 size={16} className="animate-spin" />}
+                Envoyer le lien
+              </button>
+              <button
+                type="button"
+                onClick={() => setTab('login')}
+                className="w-full py-2 text-mist text-sm hover:text-ink transition-colors"
+              >
+                ← Retour à la connexion
+              </button>
+            </form>
+          ) : tab === 'login' ? (
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-ink mb-1.5">Courriel</label>
@@ -147,6 +200,16 @@ export default function Login() {
                 <div className="flex-1 h-px bg-gray-200" />
               </div>
 
+              <div className="text-right">
+                <button
+                  type="button"
+                  onClick={() => setTab('forgot')}
+                  className="text-xs text-mist hover:text-ink transition-colors"
+                >
+                  Mot de passe oublié?
+                </button>
+              </div>
+
               <button
                 type="button"
                 onClick={handleGoogle}
@@ -164,7 +227,7 @@ export default function Login() {
           ) : (
             <form onSubmit={handleSignup} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-ink mb-1.5">Nom de l'entreprise</label>
+                <label className="block text-sm font-medium text-ink mb-1.5">{"Nom de l'entreprise"}</label>
                 <input
                   type="text"
                   value={signupForm.business_name}

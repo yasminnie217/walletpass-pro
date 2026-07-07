@@ -14,11 +14,6 @@ body {
   background: #F9F6F0;
 }
 
-#root {
-  height: 100vh;
-  overflow: hidden;
-}
-
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

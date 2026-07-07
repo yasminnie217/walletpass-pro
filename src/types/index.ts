@@ -32,7 +32,7 @@ export interface Punch {
   id: string;
   member_id: string;
   client_id: string;
-  synced_with_pass2u: boolean;
+  synced_with_google_wallet: boolean;
   created_at: string;
   members?: { first_name: string; last_name: string };
 }
@@ -43,6 +43,6 @@ export interface Notification {
   title: string | null;
   message: string;
   recipients_count: number;
-  pass2u_response: string | null;
+  wallet_response: string | null;
   sent_at: string;
 }

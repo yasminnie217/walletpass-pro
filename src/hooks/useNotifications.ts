@@ -27,12 +27,10 @@ export function useNotifications() {
       title,
       message,
       recipientsCount,
-      pass2uResponse,
     }: {
       title: string;
       message: string;
       recipientsCount: number;
-      pass2uResponse: string;
     }) => {
       if (!user) throw new Error('Non authentifié');
       const { data, error } = await supabase
@@ -42,7 +40,6 @@ export function useNotifications() {
           title: title || null,
           message,
           recipients_count: recipientsCount,
-          pass2u_response: pass2uResponse,
         })
         .select()
         .single();
