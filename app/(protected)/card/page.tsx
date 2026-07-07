@@ -54,9 +54,15 @@ export default function Card() {
         total_stamps: Number(form.total_stamps),
         reward_description: form.reward_description,
       });
-      // Met à jour la LoyaltyClass Google Wallet si le commerçant en a une
-      if (client.google_wallet_class_id) {
-        try {
+      // Crée ou met à jour la LoyaltyClass Google Wallet
+      try {
+        if (!client.google_wallet_class_id) {
+          await fetch('/api/google-wallet/create-class', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ clientId: client.id }),
+          });
+        } else {
           await fetch('/api/google-wallet/update-class', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
@@ -65,9 +71,9 @@ export default function Card() {
               programName: form.card_name,
             }),
           });
-        } catch {
-          // non-blocking
         }
+      } catch {
+        // non-blocking
       }
       toast.success('Carte mise à jour avec succès.');
     } catch {
