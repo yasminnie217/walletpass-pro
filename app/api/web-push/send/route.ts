@@ -1,12 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
 
-webpush.setVapidDetails(
-  `mailto:${process.env.VAPID_SUBJECT ?? 'admin@walletpass.pro'}`,
-  process.env.VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-);
-
 function getSupabase() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -15,6 +9,12 @@ function getSupabase() {
 }
 
 export async function POST(req: Request) {
+  webpush.setVapidDetails(
+    `mailto:${process.env.VAPID_SUBJECT ?? 'admin@walletpass.pro'}`,
+    process.env.VAPID_PUBLIC_KEY!,
+    process.env.VAPID_PRIVATE_KEY!
+  );
+
   try {
     const { clientId, title, message } = await req.json() as {
       clientId: string;
