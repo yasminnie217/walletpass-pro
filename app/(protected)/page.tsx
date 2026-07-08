@@ -113,28 +113,6 @@ export default function Dashboard() {
             <StatCard title="Récompenses prêtes" value={rewardsReady} icon={Gift} color="#CBA258" />
           </div>
 
-          {/* Invite banner */}
-          <div className="bg-white rounded-xl p-5 shadow-sm mb-8 flex items-center gap-4">
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: '#00704A15' }}
-            >
-              <Link2 size={18} style={{ color: '#00704A' }} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-ink font-medium text-sm">Lien d&apos;inscription client</p>
-              <p className="text-mist text-xs truncate">{joinUrl}</p>
-            </div>
-            <button
-              onClick={copyJoinLink}
-              className="flex items-center gap-2 px-4 py-2 rounded-full text-white text-sm font-medium transition-all hover:opacity-90 flex-shrink-0"
-              style={{ background: copied ? '#CBA258' : '#00704A' }}
-            >
-              {copied ? <Check size={14} /> : <Copy size={14} />}
-              {copied ? 'Copié!' : 'Copier'}
-            </button>
-          </div>
-
           {/* Chart + Feed */}
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
             {/* Chart */}
