@@ -28,22 +28,32 @@ export async function POST(req: Request) {
 
     const supabase = getSupabase();
 
-    const { data: members, error } = await supabase
-      .from('members')
-      .select('id, push_subscription')
-      .eq('client_id', clientId)
-      .eq('status', 'active')
-      .not('push_subscription', 'is', null);
+    const [{ data: clientData }, { data: members, error }] = await Promise.all([
+      supabase.from('clients').select('logo_url').eq('id', clientId).single(),
+      supabase.from('members').select('id, push_subscription, google_wallet_object_id')
+        .eq('client_id', clientId)
+        .eq('status', 'active')
+        .not('push_subscription', 'is', null),
+    ]);
 
     if (error) throw error;
 
-    const payload = JSON.stringify({ title: title || 'Nouveau message', body: message });
+    const logoUrl = clientData?.logo_url ?? null;
 
     let sent = 0;
     let failed = 0;
 
     await Promise.allSettled(
       (members ?? []).map(async (m) => {
+        const walletUrl = m.google_wallet_object_id
+          ? `https://pay.google.com/gp/v/save/${m.google_wallet_object_id}`
+          : 'https://pay.google.com/';
+        const payload = JSON.stringify({
+          title: title || 'Nouveau message',
+          body: message,
+          icon: logoUrl,
+          url: walletUrl,
+        });
         try {
           await webpush.sendNotification(m.push_subscription as webpush.PushSubscription, payload);
           sent++;
