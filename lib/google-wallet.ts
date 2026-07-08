@@ -222,6 +222,23 @@ export async function generateSaveUrl(objectParams: LoyaltyObjectParams): Promis
   return `https://pay.google.com/gp/v/save/${token}`;
 }
 
+// ─── Messages (notifications push) ───────────────────────────────────────────
+
+export async function addMessageToObject(objectId: string, header: string, body: string) {
+  return walletRequest(
+    'POST',
+    `/loyaltyObject/${encodeURIComponent(objectId)}/addMessage`,
+    {
+      message: {
+        id: `msg_${Date.now()}`,
+        header,
+        body,
+        messageType: 'TEXT',
+      },
+    }
+  );
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 export function buildObjectId(memberId: string): string {
