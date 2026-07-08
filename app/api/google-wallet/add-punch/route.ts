@@ -19,7 +19,7 @@ export async function POST(req: Request) {
 
     const { data: member, error } = await supabase
       .from('members')
-      .select('id,punches,google_wallet_object_id')
+      .select('id,punches,google_wallet_object_id,client_id')
       .eq('id', memberId)
       .single();
 
@@ -31,11 +31,18 @@ export async function POST(req: Request) {
       return Response.json({ ok: true, skipped: true });
     }
 
-    // Utilise la valeur passée par l'appelant pour éviter le double incrément
-    // (la DB est déjà mise à jour avant cet appel)
     const newPoints = newPointsFromCaller ?? (member.punches ?? 0) + 1;
 
-    await updateLoyaltyObject(member.google_wallet_object_id, { points: newPoints });
+    const { data: clientData } = await supabase
+      .from('clients')
+      .select('total_stamps')
+      .eq('id', member.client_id)
+      .single();
+
+    await updateLoyaltyObject(member.google_wallet_object_id, {
+      points: newPoints,
+      totalStamps: clientData?.total_stamps ?? 10,
+    });
 
     return Response.json({ ok: true, newPoints });
   } catch (err: unknown) {

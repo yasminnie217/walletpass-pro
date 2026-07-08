@@ -21,12 +21,19 @@ export interface LoyaltyObjectParams {
   memberId: string;
   memberName: string;
   points: number;
+  totalStamps?: number;
 }
 
 export interface UpdateObjectParams {
   points?: number;
+  totalStamps?: number;
   memberName?: string;
   state?: 'ACTIVE' | 'INACTIVE' | 'EXPIRED';
+}
+
+function stampsVisual(points: number, total: number): string {
+  const filled = Math.min(points, total);
+  return '●'.repeat(filled) + '○'.repeat(Math.max(0, total - filled));
 }
 
 // ─── JWT signing (RS256, via jose / WebCrypto — évite ERR_OSSL_UNSUPPORTED) ──
@@ -151,6 +158,7 @@ export async function updateLoyaltyClass(
 // ─── LoyaltyObject ───────────────────────────────────────────────────────────
 
 export async function createLoyaltyObject(params: LoyaltyObjectParams) {
+  const total = params.totalStamps ?? 10;
   const loyaltyObject = {
     id: params.objectId,
     classId: params.classId,
@@ -161,6 +169,11 @@ export async function createLoyaltyObject(params: LoyaltyObjectParams) {
       label: 'Tampons',
       balance: { int: params.points },
     },
+    textModulesData: [{
+      id: 'stamps_visual',
+      header: `Progression (${params.points}/${total})`,
+      body: stampsVisual(params.points, total),
+    }],
     barcode: {
       type: 'QR_CODE',
       value: params.memberId,
@@ -176,6 +189,12 @@ export async function updateLoyaltyObject(objectId: string, data: UpdateObjectPa
 
   if (data.points !== undefined) {
     patch.loyaltyPoints = { label: 'Tampons', balance: { int: data.points } };
+    const total = data.totalStamps ?? 10;
+    patch.textModulesData = [{
+      id: 'stamps_visual',
+      header: `Progression (${data.points}/${total})`,
+      body: stampsVisual(data.points, total),
+    }];
   }
   if (data.memberName !== undefined) patch.accountName = data.memberName;
   if (data.state !== undefined) patch.state = data.state;
@@ -202,6 +221,11 @@ export async function generateSaveUrl(objectParams: LoyaltyObjectParams): Promis
       label: 'Tampons',
       balance: { int: objectParams.points },
     },
+    textModulesData: [{
+      id: 'stamps_visual',
+      header: `Progression (${objectParams.points}/${objectParams.totalStamps ?? 10})`,
+      body: stampsVisual(objectParams.points, objectParams.totalStamps ?? 10),
+    }],
     barcode: {
       type: 'QR_CODE',
       value: objectParams.memberId,
