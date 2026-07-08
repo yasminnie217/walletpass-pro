@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/src/lib/supabase';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Check, Circle } from 'lucide-react';
+import { getPasswordChecks, validatePasswordRules } from '@/src/lib/password';
 
 export default function Login() {
   const router = useRouter();
@@ -62,24 +63,43 @@ export default function Login() {
       toast.error('Tous les champs sont obligatoires.');
       return;
     }
+    const { valid, errors } = validatePasswordRules(signupForm.password);
+    if (!valid) {
+      toast.error(`Mot de passe trop faible : ${errors.join(', ').toLowerCase()}.`);
+      return;
+    }
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signUp({
-        email: signupForm.email,
-        password: signupForm.password,
-        options: {
-          data: { business_name: signupForm.business_name },
-        },
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: signupForm.email,
+          password: signupForm.password,
+          business_name: signupForm.business_name,
+        }),
       });
-      if (error) throw error;
-      setPendingEmail(signupForm.email);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : '';
-      if (msg.includes('already registered')) {
+      const data = await res.json();
+
+      if (res.status === 409 || data.error === 'already_registered') {
         toast.error('Ce courriel est déjà inscrit.');
-      } else {
-        toast.error('Une erreur est survenue. Réessayez.');
+        return;
       }
+      if (data.error === 'pwned_password') {
+        toast.error('Ce mot de passe a déjà été exposé dans une fuite de données. Choisissez-en un autre.');
+        return;
+      }
+      if (data.error === 'weak_password') {
+        toast.error(`Mot de passe trop faible : ${(data.reasons ?? []).join(', ').toLowerCase()}.`);
+        return;
+      }
+      if (!res.ok) {
+        toast.error('Une erreur est survenue. Réessayez.');
+        return;
+      }
+      setPendingEmail(signupForm.email);
+    } catch {
+      toast.error('Une erreur est survenue. Réessayez.');
     } finally {
       setLoading(false);
     }
@@ -339,6 +359,19 @@ export default function Login() {
                   placeholder="••••••••"
                   required
                 />
+                {signupForm.password && (
+                  <ul className="mt-2.5 space-y-1">
+                    {getPasswordChecks(signupForm.password).map(c => (
+                      <li
+                        key={c.label}
+                        className={`text-xs flex items-center gap-1.5 ${c.ok ? 'text-matcha' : 'text-mist'}`}
+                      >
+                        {c.ok ? <Check size={13} /> : <Circle size={13} />}
+                        {c.label}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
               <button
                 type="submit"
