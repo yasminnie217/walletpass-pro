@@ -10,6 +10,8 @@ export default function Login() {
   const router = useRouter();
   const [tab, setTab] = useState<'login' | 'signup' | 'forgot'>('login');
   const [loading, setLoading] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
 
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [forgotEmail, setForgotEmail] = useState('');
@@ -23,7 +25,13 @@ export default function Login() {
         email: loginForm.email,
         password: loginForm.password,
       });
-      if (error) throw error;
+      if (error) {
+        if (error.message.toLowerCase().includes('email not confirmed')) {
+          setPendingEmail(loginForm.email);
+          return;
+        }
+        throw error;
+      }
       router.push('/');
     } catch {
       toast.error('Identifiants incorrects. Veuillez réessayer.');
@@ -48,8 +56,7 @@ export default function Login() {
         },
       });
       if (error) throw error;
-      // Redirect to onboarding — the client row will be created there with all required fields
-      router.push('/onboarding');
+      setPendingEmail(signupForm.email);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '';
       if (msg.includes('already registered')) {
@@ -64,6 +71,20 @@ export default function Login() {
 
   const handleGoogle = async () => {
     await supabase.auth.signInWithOAuth({ provider: 'google' });
+  };
+
+  const handleResend = async () => {
+    if (!pendingEmail) return;
+    setResending(true);
+    try {
+      const { error } = await supabase.auth.resend({ type: 'signup', email: pendingEmail });
+      if (error) throw error;
+      toast.success('Courriel renvoyé !');
+    } catch {
+      toast.error('Erreur lors du renvoi. Réessayez.');
+    } finally {
+      setResending(false);
+    }
   };
 
   const handleForgot = async (e: React.FormEvent) => {
@@ -83,6 +104,39 @@ export default function Login() {
       setLoading(false);
     }
   };
+
+  if (pendingEmail) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#F9F6F0', fontFamily: '"Inter", sans-serif' }}>
+        <div className="w-full max-w-sm">
+          <div className="flex flex-col items-center mb-8">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-xl mb-3" style={{ background: '#00704A' }}>W</div>
+            <h1 className="text-2xl font-bold text-ink" style={{ fontFamily: '"Playfair Display", serif' }}>WalletPass Pro</h1>
+          </div>
+          <div className="bg-white rounded-2xl shadow-sm p-8 text-center">
+            <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: '#00704A15' }}>
+              <svg width="28" height="28" fill="none" viewBox="0 0 24 24"><path stroke="#00704A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            </div>
+            <h2 className="text-ink font-bold text-lg mb-2">Vérifiez votre courriel</h2>
+            <p className="text-mist text-sm mb-1">Un lien de confirmation a été envoyé à</p>
+            <p className="text-ink font-medium text-sm mb-6">{pendingEmail}</p>
+            <p className="text-mist text-xs mb-6">Cliquez sur le lien dans le courriel pour activer votre compte. Vérifiez aussi vos indésirables.</p>
+            <button
+              onClick={handleResend}
+              disabled={resending}
+              className="w-full py-2.5 rounded-full font-medium text-sm border border-gray-200 text-ink hover:bg-cream transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+            >
+              {resending && <Loader2 size={14} className="animate-spin" />}
+              Renvoyer le courriel
+            </button>
+            <button onClick={() => setPendingEmail(null)} className="mt-3 text-xs text-mist hover:text-ink transition-colors">
+              ← Retour à la connexion
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
