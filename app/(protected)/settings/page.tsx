@@ -1,19 +1,22 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Save, Loader2, LogOut } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Save, Loader2, LogOut, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useClient } from '@/src/hooks/useClient';
 import { useAuth } from '@/src/hooks/useAuth';
 import { Sidebar } from '@/src/components/Sidebar';
+import { supabase } from '@/src/lib/supabase';
 
 export default function Settings() {
   const router = useRouter();
   const { user, signOut } = useAuth();
   const { client, updateClient } = useClient();
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [origin, setOrigin] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
     business_name: '',
@@ -51,6 +54,25 @@ export default function Settings() {
       toast.error('Erreur lors de la sauvegarde.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    setUploading(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `${user.id}/logo.${ext}`;
+      const { error } = await supabase.storage.from('logos').upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data } = supabase.storage.from('logos').getPublicUrl(path);
+      setForm(f => ({ ...f, logo_url: data.publicUrl }));
+      toast.success('Logo uploadé !');
+    } catch {
+      toast.error("Erreur lors de l'upload.");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -92,14 +114,22 @@ export default function Settings() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-ink mb-1.5">URL du logo</label>
-                <input
-                  type="url"
-                  value={form.logo_url}
-                  onChange={e => setForm(f => ({ ...f, logo_url: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-matcha/30 focus:border-matcha"
-                  placeholder="https://exemple.com/logo.png"
-                />
+                <label className="block text-sm font-medium text-ink mb-1.5">Logo</label>
+                <div className="flex items-center gap-4">
+                  {form.logo_url && (
+                    <img src={form.logo_url} alt="Logo" className="w-14 h-14 rounded-xl object-cover border border-gray-200" />
+                  )}
+                  <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-ink hover:border-matcha hover:text-matcha transition-all disabled:opacity-60"
+                  >
+                    {uploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+                    {form.logo_url ? 'Changer le logo' : 'Choisir un logo'}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-ink mb-1.5">Couleur principale</label>
