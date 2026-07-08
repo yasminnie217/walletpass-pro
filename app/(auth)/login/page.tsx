@@ -21,20 +21,36 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: loginForm.email,
-        password: loginForm.password,
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: loginForm.email, password: loginForm.password }),
       });
-      if (error) {
-        if (error.message.toLowerCase().includes('email not confirmed')) {
-          setPendingEmail(loginForm.email);
-          return;
-        }
-        throw error;
+      const data = await res.json();
+
+      if (res.status === 429) {
+        const min = Math.ceil((data.retryAfterSeconds ?? 900) / 60);
+        toast.error(`Trop de tentatives. Réessayez dans ${min} minute${min > 1 ? 's' : ''}.`);
+        return;
       }
+      if (res.status === 403 && data.error === 'email_not_confirmed') {
+        setPendingEmail(loginForm.email);
+        return;
+      }
+      if (!res.ok || !data.session) {
+        toast.error('Identifiants incorrects. Veuillez réessayer.');
+        return;
+      }
+
+      // Persiste la session via le client navigateur (cookies)
+      const { error } = await supabase.auth.setSession({
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token,
+      });
+      if (error) throw error;
       router.push('/');
     } catch {
-      toast.error('Identifiants incorrects. Veuillez réessayer.');
+      toast.error('Une erreur est survenue. Réessayez.');
     } finally {
       setLoading(false);
     }
@@ -95,10 +111,18 @@ export default function Login() {
     if (!forgotEmail) { toast.error('Entrez votre courriel.'); return; }
     setLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
-        redirectTo: `${window.location.origin}/login`,
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmail, redirectTo: `${window.location.origin}/login` }),
       });
-      if (error) throw error;
+      const data = await res.json();
+
+      if (res.status === 429) {
+        const min = Math.ceil((data.retryAfterSeconds ?? 3600) / 60);
+        toast.error(`Trop de demandes. Réessayez dans ${min} minute${min > 1 ? 's' : ''}.`);
+        return;
+      }
       toast.success('Courriel de réinitialisation envoyé!');
       setTab('login');
     } catch {
