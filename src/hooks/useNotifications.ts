@@ -34,16 +34,19 @@ export function useNotifications() {
     }) => {
       if (!user) throw new Error('Non authentifié');
 
-      // Envoie le message sur les cartes Google Wallet (non-bloquant)
-      try {
-        await fetch('/api/google-wallet/send-notification', {
+      // Envoie en parallèle : message GW + notification push web (non-bloquant)
+      await Promise.allSettled([
+        fetch('/api/google-wallet/send-notification', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ clientId: user.id, title, message }),
-        });
-      } catch {
-        // non-blocking
-      }
+        }),
+        fetch('/api/web-push/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ clientId: user.id, title, message }),
+        }),
+      ]);
 
       const { data, error } = await supabase
         .from('notifications')

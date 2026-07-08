@@ -70,6 +70,27 @@ export default function Join() {
       setSaveUrl(data.saveUrl ?? null);
       setSuccess(true);
 
+      // Demande la permission de notifications push et enregistre l'abonnement
+      if ('serviceWorker' in navigator && 'PushManager' in window) {
+        try {
+          const reg = await navigator.serviceWorker.register('/sw.js');
+          const permission = await Notification.requestPermission();
+          if (permission === 'granted' && data.member?.id) {
+            const sub = await reg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+            });
+            await fetch('/api/web-push/subscribe', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ memberId: data.member.id, subscription: sub.toJSON() }),
+            });
+          }
+        } catch {
+          // non-bloquant
+        }
+      }
+
       if (data.saveUrl) {
         setTimeout(() => {
           window.location.href = data.saveUrl;
