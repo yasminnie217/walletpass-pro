@@ -3,8 +3,8 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'WalletPass Pro';
   const options = {
     body: data.body || '',
-    icon: data.icon || '/icon-192.png',
-    badge: data.icon || '/icon-192.png',
+    icon: data.icon || '/favicon.svg',
+    badge: data.icon || '/favicon.svg',
     data: { url: data.url || 'https://pay.google.com/' },
   };
   event.waitUntil(self.registration.showNotification(title, options));
