@@ -1,9 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { createLoyaltyClass, buildClassId } from '@/lib/google-wallet';
+import { createSupabaseServer } from '@/src/lib/supabase-server';
 
-// Image de secours publique si le commerçant n'a pas encore de logo hébergé
-const FALLBACK_LOGO =
-  'https://farm4.staticflickr.com/3723/11177041115_6e6a3b6f49_o.jpg';
+const FALLBACK_LOGO = 'https://farm4.staticflickr.com/3723/11177041115_6e6a3b6f49_o.jpg';
 
 function getSupabase() {
   return createClient(
@@ -13,13 +12,14 @@ function getSupabase() {
 }
 
 export async function POST(req: Request) {
-  let clientId: string | undefined;
+  const supabaseAuth = await createSupabaseServer();
+  const { data: { user } } = await supabaseAuth.auth.getUser();
+  if (!user) return Response.json({ error: 'Non authentifié' }, { status: 401 });
+
+  const clientId = user.id; // Toujours l'utilisateur authentifié, jamais le body
 
   try {
-    ({ clientId } = await req.json());
-    if (!clientId) {
-      return Response.json({ error: 'clientId manquant' }, { status: 400 });
-    }
+    await req.json().catch(() => {}); // Consomme le body sans l'utiliser
 
     const supabase = getSupabase();
 
@@ -43,7 +43,6 @@ export async function POST(req: Request) {
       hexBackgroundColor: client.primary_color || '#00704A',
     });
 
-    // Stocke le classId dans le profil commerçant
     await supabase
       .from('clients')
       .update({ google_wallet_class_id: classId })
@@ -53,9 +52,8 @@ export async function POST(req: Request) {
   } catch (err: unknown) {
     const e = err as { response?: { status: number; data: unknown }; message?: string };
 
-    // 409 = classe déjà existante → idempotent, on met quand même à jour la colonne
-    const status = e.response?.status ?? (e as unknown as Record<string,unknown>).status;
-    if (status === 409 && clientId) {
+    const status = e.response?.status ?? (e as unknown as Record<string, unknown>).status;
+    if (status === 409) {
       const classId = buildClassId(clientId);
       const supabase = getSupabase();
       await supabase

@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { createSupabaseServer } from '@/src/lib/supabase-server';
 
 function getSupabase() {
   return createClient(
@@ -8,17 +9,20 @@ function getSupabase() {
 }
 
 export async function POST(req: Request) {
+  const supabaseAuth = await createSupabaseServer();
+  const { data: { user } } = await supabaseAuth.auth.getUser();
+  if (!user) return Response.json({ error: 'Non authentifié' }, { status: 401 });
+
   try {
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
-    const clientId = formData.get('clientId') as string | null;
 
-    if (!file || !clientId) {
-      return Response.json({ error: 'Fichier et clientId requis' }, { status: 400 });
+    if (!file) {
+      return Response.json({ error: 'Fichier requis' }, { status: 400 });
     }
 
     const ext = file.name.split('.').pop() ?? 'png';
-    const path = `${clientId}/logo.${ext}`;
+    const path = `${user.id}/logo.${ext}`; // Toujours dans le dossier de l'utilisateur authentifié
     const bytes = await file.arrayBuffer();
 
     const supabase = getSupabase();

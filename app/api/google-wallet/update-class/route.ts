@@ -1,22 +1,38 @@
-import { updateLoyaltyClass } from '@/lib/google-wallet';
+import { createClient } from '@supabase/supabase-js';
+import { updateLoyaltyClass, buildClassId } from '@/lib/google-wallet';
+import { createSupabaseServer } from '@/src/lib/supabase-server';
+
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 export async function PATCH(req: Request) {
+  const supabaseAuth = await createSupabaseServer();
+  const { data: { user } } = await supabaseAuth.auth.getUser();
+  if (!user) return Response.json({ error: 'Non authentifié' }, { status: 401 });
+
   try {
     const body = await req.json() as {
-      classId: string;
       programName?: string;
       issuerName?: string;
       logoUrl?: string;
       hexBackgroundColor?: string;
     };
 
-    const { classId, ...params } = body;
+    // Recalcule le classId depuis l'utilisateur authentifié — on n'accepte pas classId du body
+    const supabase = getSupabase();
+    const { data: client } = await supabase
+      .from('clients')
+      .select('google_wallet_class_id')
+      .eq('id', user.id)
+      .single();
 
-    if (!classId) {
-      return Response.json({ error: 'classId manquant' }, { status: 400 });
-    }
+    const classId = client?.google_wallet_class_id ?? buildClassId(user.id);
 
-    await updateLoyaltyClass(classId, params);
+    await updateLoyaltyClass(classId, body);
 
     return Response.json({ ok: true });
   } catch (err: unknown) {

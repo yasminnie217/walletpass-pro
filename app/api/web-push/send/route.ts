@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
+import { createSupabaseServer } from '@/src/lib/supabase-server';
 
 function getSupabase() {
   return createClient(
@@ -9,6 +10,11 @@ function getSupabase() {
 }
 
 export async function POST(req: Request) {
+  // Vérification auth côté serveur
+  const supabaseAuth = await createSupabaseServer();
+  const { data: { user } } = await supabaseAuth.auth.getUser();
+  if (!user) return Response.json({ error: 'Non authentifié' }, { status: 401 });
+
   webpush.setVapidDetails(
     `mailto:${process.env.VAPID_SUBJECT ?? 'admin@walletpass.pro'}`,
     process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
@@ -16,14 +22,11 @@ export async function POST(req: Request) {
   );
 
   try {
-    const { clientId, title, message } = await req.json() as {
-      clientId: string;
-      title?: string;
-      message: string;
-    };
+    const { title, message } = await req.json() as { title?: string; message: string };
+    const clientId = user.id; // On ignore le clientId du body — on utilise l'utilisateur authentifié
 
-    if (!clientId || !message) {
-      return Response.json({ error: 'clientId et message requis' }, { status: 400 });
+    if (!message) {
+      return Response.json({ error: 'message requis' }, { status: 400 });
     }
 
     const supabase = getSupabase();
@@ -38,10 +41,8 @@ export async function POST(req: Request) {
 
     if (error) throw error;
 
-    // Must be an absolute HTTPS URL for Android Chrome to display the icon
     const appOrigin = process.env.NEXT_PUBLIC_APP_URL ?? 'https://walletpass-pro2.vercel.app';
     const rawLogo = clientData?.logo_url ?? null;
-    // Proxy via notre domaine pour éviter le blocage cross-origin sur Android Chrome
     const logoUrl = rawLogo && rawLogo.startsWith('http')
       ? `${appOrigin}/api/proxy-image?url=${encodeURIComponent(rawLogo)}`
       : `${appOrigin}/favicon.svg`;

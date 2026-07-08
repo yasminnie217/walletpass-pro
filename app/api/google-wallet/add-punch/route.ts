@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { updateLoyaltyObject } from '@/lib/google-wallet';
+import { createSupabaseServer } from '@/src/lib/supabase-server';
 
 function getSupabase() {
   return createClient(
@@ -9,6 +10,10 @@ function getSupabase() {
 }
 
 export async function POST(req: Request) {
+  const supabaseAuth = await createSupabaseServer();
+  const { data: { user } } = await supabaseAuth.auth.getUser();
+  if (!user) return Response.json({ error: 'Non authentifié' }, { status: 401 });
+
   try {
     const { memberId, newPoints: newPointsFromCaller } = await req.json() as { memberId: string; newPoints?: number };
     if (!memberId) {
@@ -17,22 +22,22 @@ export async function POST(req: Request) {
 
     const supabase = getSupabase();
 
+    // Vérifie que le membre appartient bien au client authentifié
     const { data: member, error } = await supabase
       .from('members')
-      .select('id,punches,google_wallet_object_id')
+      .select('id,punches,google_wallet_object_id,client_id')
       .eq('id', memberId)
+      .eq('client_id', user.id) // Protection : seul le bon commerçant peut modifier ses membres
       .single();
 
     if (error || !member) {
-      return Response.json({ error: 'Membre introuvable' }, { status: 404 });
+      return Response.json({ error: 'Membre introuvable ou accès refusé' }, { status: 404 });
     }
 
     if (!member.google_wallet_object_id) {
       return Response.json({ ok: true, skipped: true });
     }
 
-    // Utilise la valeur passée par l'appelant pour éviter le double incrément
-    // (la DB est déjà mise à jour avant cet appel)
     const newPoints = newPointsFromCaller ?? (member.punches ?? 0) + 1;
 
     await updateLoyaltyObject(member.google_wallet_object_id, { points: newPoints });
@@ -41,8 +46,6 @@ export async function POST(req: Request) {
   } catch (err: unknown) {
     const e = err as { response?: { status: number; data: unknown }; message?: string };
     console.error('[add-punch GW]', e.response?.data ?? e.message);
-    // Non-bloquant : on retourne ok=false mais pas d'erreur 5xx
-    // (la mise à jour Supabase a déjà été faite en amont dans le flow membres)
     return Response.json(
       { ok: false, error: 'Erreur mise à jour GW', detail: e.response?.data ?? e.message },
       { status: 500 }

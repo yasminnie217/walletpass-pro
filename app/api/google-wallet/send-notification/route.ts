@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { addMessageToObject } from '@/lib/google-wallet';
+import { createSupabaseServer } from '@/src/lib/supabase-server';
 
 function getSupabase() {
   return createClient(
@@ -9,20 +10,20 @@ function getSupabase() {
 }
 
 export async function POST(req: Request) {
-  try {
-    const { clientId, title, message } = await req.json() as {
-      clientId: string;
-      title?: string;
-      message: string;
-    };
+  const supabaseAuth = await createSupabaseServer();
+  const { data: { user } } = await supabaseAuth.auth.getUser();
+  if (!user) return Response.json({ error: 'Non authentifié' }, { status: 401 });
 
-    if (!clientId || !message) {
-      return Response.json({ error: 'clientId et message requis' }, { status: 400 });
+  try {
+    const { title, message } = await req.json() as { title?: string; message: string };
+    const clientId = user.id;
+
+    if (!message) {
+      return Response.json({ error: 'message requis' }, { status: 400 });
     }
 
     const supabase = getSupabase();
 
-    // Récupère tous les membres actifs avec une carte GW
     const { data: members, error } = await supabase
       .from('members')
       .select('id, google_wallet_object_id')
@@ -36,7 +37,6 @@ export async function POST(req: Request) {
     let sent = 0;
     let failed = 0;
 
-    // Envoie le message à chaque carte en parallèle
     await Promise.allSettled(
       (members ?? []).map(async (m) => {
         try {
