@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import { useClient } from '@/src/hooks/useClient';
 import { useAuth } from '@/src/hooks/useAuth';
 import { Sidebar } from '@/src/components/Sidebar';
-import { supabase } from '@/src/lib/supabase';
 
 export default function Settings() {
   const router = useRouter();
@@ -62,12 +61,13 @@ export default function Settings() {
     if (!file || !user) return;
     setUploading(true);
     try {
-      const ext = file.name.split('.').pop();
-      const path = `${user.id}/logo.${ext}`;
-      const { error } = await supabase.storage.from('logos').upload(path, file, { upsert: true });
-      if (error) throw error;
-      const { data } = supabase.storage.from('logos').getPublicUrl(path);
-      setForm(f => ({ ...f, logo_url: data.publicUrl }));
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('clientId', user.id);
+      const res = await fetch('/api/upload-logo', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setForm(f => ({ ...f, logo_url: data.url }));
       toast.success('Logo uploadé !');
     } catch {
       toast.error("Erreur lors de l'upload.");
