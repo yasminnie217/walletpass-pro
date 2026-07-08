@@ -41,8 +41,9 @@ export async function POST(req: Request) {
     // Must be an absolute HTTPS URL for Android Chrome to display the icon
     const appOrigin = process.env.NEXT_PUBLIC_APP_URL ?? 'https://walletpass-pro2.vercel.app';
     const rawLogo = clientData?.logo_url ?? null;
+    // Proxy via notre domaine pour éviter le blocage cross-origin sur Android Chrome
     const logoUrl = rawLogo && rawLogo.startsWith('http')
-      ? rawLogo
+      ? `${appOrigin}/api/proxy-image?url=${encodeURIComponent(rawLogo)}`
       : `${appOrigin}/favicon.svg`;
 
     let sent = 0;

@@ -67,11 +67,12 @@ export default function Dashboard() {
               <p className="text-sm font-medium text-ink">{client?.business_name || 'Mon Commerce'}</p>
               <p className="text-xs text-mist">{user?.email}</p>
             </div>
-            <div
-              className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold"
+            <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
               style={{ background: '#00704A' }}
             >
-              {initials}
+              {client?.logo_url
+                ? <img src={client.logo_url} alt="" className="w-full h-full object-cover" />
+                : initials}
             </div>
             <button
               onClick={handleSignOut}
