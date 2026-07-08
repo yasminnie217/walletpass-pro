@@ -48,7 +48,7 @@ export default function Members() {
           await fetch('/api/google-wallet/add-punch', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ memberId: member.id }),
+            body: JSON.stringify({ memberId: member.id, newPoints: newPunches }),
           });
         } catch {
           // non-blocking

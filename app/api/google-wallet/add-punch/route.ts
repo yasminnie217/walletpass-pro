@@ -10,7 +10,7 @@ function getSupabase() {
 
 export async function POST(req: Request) {
   try {
-    const { memberId } = await req.json() as { memberId: string };
+    const { memberId, newPoints: newPointsFromCaller } = await req.json() as { memberId: string; newPoints?: number };
     if (!memberId) {
       return Response.json({ error: 'memberId manquant' }, { status: 400 });
     }
@@ -28,11 +28,12 @@ export async function POST(req: Request) {
     }
 
     if (!member.google_wallet_object_id) {
-      // Pas encore de carte GW pour ce membre — rien à mettre à jour côté Google
       return Response.json({ ok: true, skipped: true });
     }
 
-    const newPoints = (member.punches ?? 0) + 1;
+    // Utilise la valeur passée par l'appelant pour éviter le double incrément
+    // (la DB est déjà mise à jour avant cet appel)
+    const newPoints = newPointsFromCaller ?? (member.punches ?? 0) + 1;
 
     await updateLoyaltyObject(member.google_wallet_object_id, { points: newPoints });
 
