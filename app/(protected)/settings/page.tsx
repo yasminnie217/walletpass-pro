@@ -48,6 +48,23 @@ export default function Settings() {
         logo_url: form.logo_url || null,
         primary_color: form.primary_color,
       });
+
+      // Répercute le logo et la couleur sur la carte Google Wallet
+      if (client?.google_wallet_class_id) {
+        try {
+          await fetch('/api/google-wallet/update-class', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              logoUrl: form.logo_url || undefined,
+              hexBackgroundColor: form.primary_color,
+            }),
+          });
+        } catch {
+          // non-bloquant
+        }
+      }
+
       toast.success('Paramètres sauvegardés.');
     } catch {
       toast.error('Erreur lors de la sauvegarde.');

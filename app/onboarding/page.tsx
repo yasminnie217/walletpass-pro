@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useClient } from '@/src/hooks/useClient';
@@ -14,6 +14,9 @@ export default function Onboarding() {
   const { user, loading: authLoading } = useAuth();
   const { client, clientChecked, createClient } = useClient();
   const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
     business_name: user?.user_metadata?.business_name || '',
@@ -23,6 +26,26 @@ export default function Onboarding() {
     reward_description: '',
     primary_color: '#00704A',
   });
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('clientId', user.id);
+      const res = await fetch('/api/upload-logo', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setLogoUrl(data.url);
+      toast.success('Logo ajouté !');
+    } catch {
+      toast.error("Erreur lors de l'upload du logo.");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   // Pre-fill business name from signup metadata
   useEffect(() => {
@@ -50,7 +73,7 @@ export default function Onboarding() {
     total_stamps: Number(form.total_stamps) || 5,
     reward_description: form.reward_description || 'Récompense gratuite',
     primary_color: form.primary_color,
-    logo_url: null,
+    logo_url: logoUrl,
     google_wallet_class_id: null,
     created_at: new Date().toISOString(),
   };
@@ -70,6 +93,7 @@ export default function Onboarding() {
         total_stamps: Number(form.total_stamps),
         reward_description: form.reward_description,
         primary_color: form.primary_color,
+        logo_url: logoUrl,
       });
       console.log('[Onboarding] client created:', result);
 
@@ -184,6 +208,28 @@ export default function Onboarding() {
                     placeholder="ex. Carte Récompenses"
                     required
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-ink mb-1.5">
+                    Logo (PNG)
+                  </label>
+                  <div className="flex items-center gap-4">
+                    {logoUrl && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={logoUrl} alt="Logo" className="w-14 h-14 rounded-xl object-cover border border-gray-200" />
+                    )}
+                    <input ref={fileInputRef} type="file" accept="image/png,image/jpeg" className="hidden" onChange={handleLogoUpload} />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-ink hover:border-matcha hover:text-matcha transition-all disabled:opacity-60"
+                    >
+                      {uploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+                      {logoUrl ? 'Changer le logo' : 'Téléverser un logo'}
+                    </button>
+                  </div>
                 </div>
 
                 <div>

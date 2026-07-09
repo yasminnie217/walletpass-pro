@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Users, Stamp, CreditCard, Gift, LogOut, Link2, Copy, Check } from 'lucide-react';
+import { Users, Stamp, CreditCard, Gift, LogOut, Download } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useClient } from '@/src/hooks/useClient';
@@ -11,7 +11,7 @@ import { Sidebar } from '@/src/components/Sidebar';
 import { StatCard } from '@/src/components/StatCard';
 import { getInitials, timeAgo } from '@/src/lib/utils';
 import { toast } from 'sonner';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -33,15 +33,26 @@ export default function Dashboard() {
   const initials = user?.email ? user.email.substring(0, 2).toUpperCase() : 'WP';
 
   const recentPunches = punches.slice(0, 10);
-  const [origin, setOrigin] = useState('');
-  const [copied, setCopied] = useState(false);
-  useEffect(() => { setOrigin(window.location.origin); }, []);
-  const joinUrl = `${origin}/join/${user?.id}`;
-  const copyJoinLink = () => {
-    navigator.clipboard.writeText(joinUrl);
-    setCopied(true);
-    toast.success('Lien copié!');
-    setTimeout(() => setCopied(false), 2000);
+
+  const [exporting, setExporting] = useState(false);
+  const handleExportCsv = async () => {
+    setExporting(true);
+    try {
+      const res = await fetch('/api/stats/export');
+      if (!res.ok) throw new Error();
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const now = new Date();
+      a.download = `stats-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error("Erreur lors de l'export.");
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
@@ -97,12 +108,23 @@ export default function Dashboard() {
               </h1>
               <p className="text-mist mt-1">{"Voici ce qui se passe aujourd'hui."}</p>
             </div>
-            <span
-              className="px-3 py-1 rounded-full text-xs font-semibold"
-              style={{ background: '#CBA25820', color: '#CBA258', border: '1px solid #CBA258' }}
-            >
-              Plan Pro
-            </span>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleExportCsv}
+                disabled={exporting}
+                className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-white transition-all hover:opacity-90 disabled:opacity-60"
+                style={{ background: '#00704A' }}
+              >
+                <Download size={15} />
+                {exporting ? 'Export…' : 'Exporter le mois (CSV)'}
+              </button>
+              <span
+                className="px-3 py-1 rounded-full text-xs font-semibold"
+                style={{ background: '#CBA25820', color: '#CBA258', border: '1px solid #CBA258' }}
+              >
+                Plan Pro
+              </span>
+            </div>
           </div>
 
           {/* Stats grid */}
