@@ -1,0 +1,16 @@
+{
+  "name": "WalletPass Caisse",
+  "short_name": "Caisse",
+  "description": "App caissier — scanner et gérer les cartes de fidélité",
+  "start_url": "/caisse/scan",
+  "scope": "/caisse",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F9F6F0",
+  "theme_color": "#00704A",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
