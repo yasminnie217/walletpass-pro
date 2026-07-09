@@ -33,7 +33,10 @@ export async function POST(req: Request) {
     if (error) throw error;
 
     const { data } = supabase.storage.from('logos').getPublicUrl(path);
-    return Response.json({ url: data.publicUrl });
+    // Paramètre anti-cache : force le navigateur et Google Wallet à recharger
+    // la nouvelle image même si le nom de fichier est identique.
+    const url = `${data.publicUrl}?v=${Date.now()}`;
+    return Response.json({ url });
   } catch (err: unknown) {
     const e = err as { message?: string };
     console.error('[upload-logo]', e.message);

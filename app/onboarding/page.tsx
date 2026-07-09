@@ -28,7 +28,8 @@ export default function Onboarding() {
   });
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const input = e.target;
+    const file = input.files?.[0];
     if (!file || !user) return;
     setUploading(true);
     try {
@@ -44,6 +45,7 @@ export default function Onboarding() {
       toast.error("Erreur lors de l'upload du logo.");
     } finally {
       setUploading(false);
+      input.value = ''; // permet de re-sélectionner le même fichier
     }
   };
 
