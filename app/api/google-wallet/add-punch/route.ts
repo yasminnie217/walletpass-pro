@@ -40,7 +40,17 @@ export async function POST(req: Request) {
 
     const newPoints = newPointsFromCaller ?? (member.punches ?? 0) + 1;
 
-    await updateLoyaltyObject(member.google_wallet_object_id, { points: newPoints });
+    // Total de tampons requis pour afficher "X / total" sur la carte
+    const { data: clientData } = await supabase
+      .from('clients')
+      .select('total_stamps')
+      .eq('id', member.client_id)
+      .single();
+
+    await updateLoyaltyObject(member.google_wallet_object_id, {
+      points: newPoints,
+      totalStamps: clientData?.total_stamps ?? undefined,
+    });
 
     return Response.json({ ok: true, newPoints });
   } catch (err: unknown) {

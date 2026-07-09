@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     // Récupère la LoyaltyClass du commerçant
     const { data: clientRow } = await supabase
       .from('clients')
-      .select('google_wallet_class_id,card_name,organization_name,business_name')
+      .select('google_wallet_class_id,card_name,organization_name,business_name,total_stamps')
       .eq('id', clientId)
       .single();
 
@@ -74,7 +74,7 @@ export async function POST(req: Request) {
         const objectId = buildObjectId(member.id);
         const memberName = `${first_name} ${last_name}`;
 
-        const params = { objectId, classId, memberId: member.id, memberName, points: 0 };
+        const params = { objectId, classId, memberId: member.id, memberName, points: 0, totalStamps: clientRow?.total_stamps ?? undefined };
         await createLoyaltyObject(params);
         saveUrl = await generateSaveUrl(params);
         googleWalletObjectId = objectId;

@@ -34,8 +34,8 @@ export function useNotifications() {
     }) => {
       if (!user) throw new Error('Non authentifié');
 
-      // Envoie en parallèle : message GW + notification push web (non-bloquant)
-      await Promise.allSettled([
+      // Envoie en parallèle : message GW (sur la carte) + notification push web (téléphone)
+      const [, pushRes] = await Promise.allSettled([
         fetch('/api/google-wallet/send-notification', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -48,6 +48,12 @@ export function useNotifications() {
         }),
       ]);
 
+      // Récupère le résultat réel de l'envoi push pour l'afficher
+      let pushResult: { sent: number; failed: number; total: number } | null = null;
+      if (pushRes.status === 'fulfilled' && pushRes.value.ok) {
+        try { pushResult = await pushRes.value.json(); } catch { /* ignore */ }
+      }
+
       const { data, error } = await supabase
         .from('notifications')
         .insert({
@@ -59,7 +65,7 @@ export function useNotifications() {
         .select()
         .single();
       if (error) throw error;
-      return data as Notification;
+      return { notification: data as Notification, pushResult };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications', user?.id] });

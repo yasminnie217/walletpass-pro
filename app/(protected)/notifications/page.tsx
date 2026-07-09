@@ -25,13 +25,17 @@ export default function Notifications() {
     }
     setSending(true);
     try {
-      await sendNotification.mutateAsync({
+      const { pushResult } = await sendNotification.mutateAsync({
         title,
         message,
         recipientsCount,
       });
 
-      toast.success(`Notification envoyée à ${recipientsCount} membre(s).`);
+      if (pushResult) {
+        toast.success(`Notification envoyée. Push : ${pushResult.sent} reçue(s)${pushResult.failed ? `, ${pushResult.failed} échouée(s)` : ''}.`);
+      } else {
+        toast.success(`Notification envoyée à ${recipientsCount} membre(s).`);
+      }
       setTitle('');
       setMessage('');
     } catch {

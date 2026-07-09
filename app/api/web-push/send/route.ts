@@ -49,6 +49,7 @@ export async function POST(req: Request) {
 
     let sent = 0;
     let failed = 0;
+    let pruned = 0;
 
     await Promise.allSettled(
       (members ?? []).map(async (m) => {
@@ -64,13 +65,20 @@ export async function POST(req: Request) {
         try {
           await webpush.sendNotification(m.push_subscription as webpush.PushSubscription, payload);
           sent++;
-        } catch {
+        } catch (err: unknown) {
           failed++;
+          const status = (err as { statusCode?: number }).statusCode;
+          console.error(`[web-push/send] échec membre ${m.id} — status ${status}`);
+          // 404/410 = abonnement expiré/révoqué → on le supprime pour ne plus réessayer
+          if (status === 404 || status === 410) {
+            await supabase.from('members').update({ push_subscription: null }).eq('id', m.id);
+            pruned++;
+          }
         }
       })
     );
 
-    return Response.json({ sent, failed, total: members?.length ?? 0 });
+    return Response.json({ sent, failed, pruned, total: members?.length ?? 0 });
   } catch (err: unknown) {
     const e = err as { message?: string };
     console.error('[web-push/send]', e.message);

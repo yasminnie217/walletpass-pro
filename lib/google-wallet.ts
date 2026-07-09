@@ -21,12 +21,21 @@ export interface LoyaltyObjectParams {
   memberId: string;
   memberName: string;
   points: number;
+  totalStamps?: number;
 }
 
 export interface UpdateObjectParams {
   points?: number;
+  totalStamps?: number;
   memberName?: string;
   state?: 'ACTIVE' | 'INACTIVE' | 'EXPIRED';
+}
+
+// Affichage "2 / 5" sur la carte (nombre de tampons sur le total requis)
+function pointsBalance(points: number, total?: number) {
+  return total && total > 0
+    ? { string: `${points} / ${total}` }
+    : { int: points };
 }
 
 // ─── JWT signing (RS256, via jose / WebCrypto — évite ERR_OSSL_UNSUPPORTED) ──
@@ -159,7 +168,7 @@ export async function createLoyaltyObject(params: LoyaltyObjectParams) {
     accountName: params.memberName,
     loyaltyPoints: {
       label: 'Tampons',
-      balance: { int: params.points },
+      balance: pointsBalance(params.points, params.totalStamps),
     },
     barcode: {
       type: 'QR_CODE',
@@ -175,7 +184,7 @@ export async function updateLoyaltyObject(objectId: string, data: UpdateObjectPa
   const patch: Record<string, unknown> = {};
 
   if (data.points !== undefined) {
-    patch.loyaltyPoints = { label: 'Tampons', balance: { int: data.points } };
+    patch.loyaltyPoints = { label: 'Tampons', balance: pointsBalance(data.points, data.totalStamps) };
   }
   if (data.memberName !== undefined) patch.accountName = data.memberName;
   if (data.state !== undefined) patch.state = data.state;
@@ -200,7 +209,7 @@ export async function generateSaveUrl(objectParams: LoyaltyObjectParams): Promis
     accountName: objectParams.memberName,
     loyaltyPoints: {
       label: 'Tampons',
-      balance: { int: objectParams.points },
+      balance: pointsBalance(objectParams.points, objectParams.totalStamps),
     },
     barcode: {
       type: 'QR_CODE',
