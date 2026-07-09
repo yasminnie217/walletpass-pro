@@ -60,22 +60,19 @@ export default function Join() {
       });
       const data = await res.json();
 
-      if (res.status === 409) {
-        setError('Ce courriel est déjà inscrit.');
-        setSubmitting(false);
-        return;
-      }
       if (!res.ok) throw new Error(data.error);
 
       setSaveUrl(data.saveUrl ?? null);
       setSuccess(true);
 
-      // Demande la permission de notifications push et enregistre l'abonnement
-      if ('serviceWorker' in navigator && 'PushManager' in window) {
+      // Demande la permission de notifications push et enregistre l'abonnement.
+      // Fonctionne aussi pour un membre déjà inscrit (réactivation).
+      if ('serviceWorker' in navigator && 'PushManager' in window && data.member?.id) {
         try {
-          const reg = await navigator.serviceWorker.register('/sw.js');
+          await navigator.serviceWorker.register('/sw.js');
+          const reg = await navigator.serviceWorker.ready; // attend un SW actif
           const permission = await Notification.requestPermission();
-          if (permission === 'granted' && data.member?.id) {
+          if (permission === 'granted') {
             const sub = await reg.pushManager.subscribe({
               userVisibleOnly: true,
               applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,

@@ -25,24 +25,42 @@ export async function POST(req: Request) {
 
     const supabase = getSupabase();
 
-    // Vérifie doublon
-    const { data: existing } = await supabase
-      .from('members')
-      .select('id')
-      .eq('client_id', clientId)
-      .eq('email', email)
-      .maybeSingle();
-
-    if (existing) {
-      return Response.json({ error: 'Ce courriel est déjà inscrit.' }, { status: 409 });
-    }
-
     // Récupère la LoyaltyClass du commerçant
     const { data: clientRow } = await supabase
       .from('clients')
       .select('google_wallet_class_id,card_name,organization_name,business_name,total_stamps')
       .eq('id', clientId)
       .single();
+
+    // Membre déjà inscrit → on ne recrée rien, on renvoie sa carte pour qu'il puisse
+    // réactiver ses notifications et récupérer son bouton Wallet.
+    const { data: existing } = await supabase
+      .from('members')
+      .select('id,first_name,last_name,punches,google_wallet_object_id')
+      .eq('client_id', clientId)
+      .eq('email', email)
+      .maybeSingle();
+
+    if (existing) {
+      let saveUrl: string | null = null;
+      const classId = clientRow?.google_wallet_class_id;
+      if (classId) {
+        try {
+          const objectId = existing.google_wallet_object_id ?? buildObjectId(existing.id);
+          saveUrl = await generateSaveUrl({
+            objectId,
+            classId,
+            memberId: existing.id,
+            memberName: `${existing.first_name} ${existing.last_name}`,
+            points: existing.punches ?? 0,
+            totalStamps: clientRow?.total_stamps ?? undefined,
+          });
+        } catch (gwErr) {
+          console.error('[join] regénération saveUrl (existant) échouée:', gwErr);
+        }
+      }
+      return Response.json({ member: existing, saveUrl, alreadyRegistered: true });
+    }
 
     // Insère le membre avec consentement
     const consentedAt = email_consent ? new Date().toISOString() : null;
