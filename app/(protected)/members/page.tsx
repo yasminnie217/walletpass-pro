@@ -10,7 +10,6 @@ import { useAuth } from '@/src/hooks/useAuth';
 import { Sidebar } from '@/src/components/Sidebar';
 import { MemberRow } from '@/src/components/MemberRow';
 import type { Member } from '@/src/types';
-import { exportToCSV } from '@/src/lib/utils';
 
 export default function Members() {
   const { user } = useAuth();
@@ -114,18 +113,26 @@ export default function Members() {
     }
   };
 
-  const handleExport = () => {
-    exportToCSV(
-      members.map(m => ({
-        Prénom: m.first_name,
-        'Nom de famille': m.last_name,
-        Courriel: m.email,
-        Tampons: m.punches,
-        Statut: m.reward_available ? 'Récompense prête' : m.status,
-        Inscription: m.joined_at,
-      })),
-      'membres.csv'
-    );
+  const [exporting, setExporting] = useState<'csv' | 'xlsx' | null>(null);
+  const handleExport = async (format: 'csv' | 'xlsx') => {
+    setExporting(format);
+    try {
+      const res = await fetch(`/api/members/export?format=${format}`);
+      if (!res.ok) throw new Error();
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const now = new Date();
+      const d = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      a.download = `membres-${d}.${format}`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error("Erreur lors de l'export.");
+    } finally {
+      setExporting(null);
+    }
   };
 
   return (
@@ -163,11 +170,21 @@ export default function Members() {
             />
           </div>
           <button
-            onClick={handleExport}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-gray-200 bg-white text-sm font-medium text-ink hover:bg-cream transition-all"
+            onClick={() => handleExport('xlsx')}
+            disabled={exporting !== null}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full text-white text-sm font-medium transition-all hover:opacity-90 disabled:opacity-60"
+            style={{ background: '#00704A' }}
           >
             <Download size={14} />
-            Exporter CSV
+            {exporting === 'xlsx' ? 'Export…' : 'Excel'}
+          </button>
+          <button
+            onClick={() => handleExport('csv')}
+            disabled={exporting !== null}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-gray-200 bg-white text-sm font-medium text-ink hover:bg-cream transition-all disabled:opacity-60"
+          >
+            <Download size={14} />
+            {exporting === 'csv' ? 'Export…' : 'CSV'}
           </button>
         </div>
 
