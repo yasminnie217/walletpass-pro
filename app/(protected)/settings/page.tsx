@@ -149,6 +149,9 @@ export default function Settings() {
                     {form.logo_url ? 'Changer le logo' : 'Choisir un logo'}
                   </button>
                 </div>
+                <p className="text-xs text-mist mt-2">
+                  Format carré recommandé (512×512 px, PNG). Le logo s&apos;affiche dans un cercle sur Google Wallet.
+                </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-ink mb-1.5">Couleur principale</label>

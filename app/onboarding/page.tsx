@@ -232,6 +232,9 @@ export default function Onboarding() {
                       {logoUrl ? 'Changer le logo' : 'Téléverser un logo'}
                     </button>
                   </div>
+                  <p className="text-xs text-mist mt-2">
+                    Format carré recommandé (512×512 px, PNG). Le logo s&apos;affiche dans un cercle sur Google Wallet.
+                  </p>
                 </div>
 
                 <div>
