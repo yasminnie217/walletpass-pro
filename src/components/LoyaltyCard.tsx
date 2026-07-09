@@ -7,10 +7,22 @@ interface LoyaltyCardProps {
   animateLastStamp?: boolean;
 }
 
+// Assombrit une couleur hex d'un facteur donné (0 = inchangé, 1 = noir)
+function darken(hex: string, amount: number): string {
+  let h = hex.replace('#', '');
+  if (h.length === 3) h = h.split('').map((c) => c + c).join('');
+  const num = parseInt(h, 16);
+  const r = Math.round(((num >> 16) & 255) * (1 - amount));
+  const g = Math.round(((num >> 8) & 255) * (1 - amount));
+  const b = Math.round((num & 255) * (1 - amount));
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
 export function LoyaltyCard({ client, punches = 0, animateLastStamp = false }: LoyaltyCardProps) {
   const total = client.total_stamps || 5;
   const filled = Math.min(punches, total);
   const accentColor = client.primary_color || '#00704A';
+  const darkColor = darken(accentColor, 0.45);
 
   return (
     <div
@@ -19,8 +31,8 @@ export function LoyaltyCard({ client, punches = 0, animateLastStamp = false }: L
         width: '100%',
         maxWidth: '400px',
         aspectRatio: '1.6',
-        background: `linear-gradient(135deg, #1E3932 0%, ${accentColor} 100%)`,
-        boxShadow: `inset 0 1px 0 rgba(255,255,255,0.1), 0 20px 40px rgba(30,57,50,0.4)`,
+        background: `linear-gradient(135deg, ${darkColor} 0%, ${accentColor} 100%)`,
+        boxShadow: `inset 0 1px 0 rgba(255,255,255,0.12), 0 20px 40px rgba(0,0,0,0.25)`,
       }}
     >
       {/* Subtle noise texture overlay */}
