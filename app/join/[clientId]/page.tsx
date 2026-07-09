@@ -65,28 +65,8 @@ export default function Join() {
       setSaveUrl(data.saveUrl ?? null);
       setSuccess(true);
 
-      // Demande la permission de notifications push et enregistre l'abonnement.
-      // Fonctionne aussi pour un membre déjà inscrit (réactivation).
-      if ('serviceWorker' in navigator && 'PushManager' in window && data.member?.id) {
-        try {
-          await navigator.serviceWorker.register('/sw.js');
-          const reg = await navigator.serviceWorker.ready; // attend un SW actif
-          const permission = await Notification.requestPermission();
-          if (permission === 'granted') {
-            const sub = await reg.pushManager.subscribe({
-              userVisibleOnly: true,
-              applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-            });
-            await fetch('/api/web-push/subscribe', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ memberId: data.member.id, subscription: sub.toJSON() }),
-            });
-          }
-        } catch {
-          // non-bloquant
-        }
-      }
+      // Les notifications passent par Google Wallet (message sur la carte),
+      // aucun abonnement navigateur à demander au membre.
 
       if (data.saveUrl) {
         setTimeout(() => {

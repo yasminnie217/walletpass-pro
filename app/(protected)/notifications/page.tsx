@@ -25,14 +25,14 @@ export default function Notifications() {
     }
     setSending(true);
     try {
-      const { pushResult } = await sendNotification.mutateAsync({
+      const { gwResult } = await sendNotification.mutateAsync({
         title,
         message,
         recipientsCount,
       });
 
-      if (pushResult) {
-        toast.success(`Notification envoyée. Push : ${pushResult.sent} reçue(s)${pushResult.failed ? `, ${pushResult.failed} échouée(s)` : ''}.`);
+      if (gwResult) {
+        toast.success(`Message envoyé à ${gwResult.sent} carte(s)${gwResult.failed ? `, ${gwResult.failed} échec(s)` : ''}.`);
       } else {
         toast.success(`Notification envoyée à ${recipientsCount} membre(s).`);
       }
