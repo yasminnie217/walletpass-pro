@@ -11,7 +11,12 @@ import type { Client } from '@/src/types';
 
 export default function Onboarding() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.replace('/login');
+  };
   const { client, clientChecked, createClient } = useClient();
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -142,6 +147,19 @@ export default function Onboarding() {
     >
       <div className="min-h-full py-10 px-4">
         <div className="max-w-4xl mx-auto">
+          {/* Barre compte connecté */}
+          <div className="flex items-center justify-between mb-6 text-sm">
+            <span className="text-mist truncate">
+              Connecté&nbsp;: <span className="text-ink font-medium">{user?.email}</span>
+            </span>
+            <button
+              onClick={handleSignOut}
+              className="text-mist hover:text-error font-medium transition-colors whitespace-nowrap"
+            >
+              Se déconnecter
+            </button>
+          </div>
+
           {/* Logo */}
           <div className="flex items-center justify-center gap-3 mb-10">
             <div
