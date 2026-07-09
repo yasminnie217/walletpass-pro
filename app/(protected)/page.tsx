@@ -34,24 +34,24 @@ export default function Dashboard() {
 
   const recentPunches = punches.slice(0, 10);
 
-  const [exporting, setExporting] = useState(false);
-  const handleExportCsv = async () => {
-    setExporting(true);
+  const [exporting, setExporting] = useState<'csv' | 'xlsx' | null>(null);
+  const handleExport = async (format: 'csv' | 'xlsx') => {
+    setExporting(format);
     try {
-      const res = await fetch('/api/stats/export');
+      const res = await fetch(`/api/stats/export?format=${format}`);
       if (!res.ok) throw new Error();
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       const now = new Date();
-      a.download = `stats-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}.xlsx`;
+      a.download = `stats-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}.${format}`;
       a.click();
       URL.revokeObjectURL(url);
     } catch {
       toast.error("Erreur lors de l'export.");
     } finally {
-      setExporting(false);
+      setExporting(null);
     }
   };
 
@@ -110,13 +110,21 @@ export default function Dashboard() {
             </div>
             <div className="flex items-center gap-3">
               <button
-                onClick={handleExportCsv}
-                disabled={exporting}
+                onClick={() => handleExport('xlsx')}
+                disabled={exporting !== null}
                 className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-white transition-all hover:opacity-90 disabled:opacity-60"
                 style={{ background: '#00704A' }}
               >
                 <Download size={15} />
-                {exporting ? 'Export…' : 'Exporter le mois (Excel)'}
+                {exporting === 'xlsx' ? 'Export…' : 'Excel'}
+              </button>
+              <button
+                onClick={() => handleExport('csv')}
+                disabled={exporting !== null}
+                className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-ink border border-gray-200 bg-white transition-all hover:bg-cream disabled:opacity-60"
+              >
+                <Download size={15} />
+                {exporting === 'csv' ? 'Export…' : 'CSV'}
               </button>
               <span
                 className="px-3 py-1 rounded-full text-xs font-semibold"

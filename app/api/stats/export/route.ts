@@ -19,7 +19,14 @@ const GOLD = 'FFCBA258';
 const LIGHT = 'FFF1EDE4';
 const WHITE = 'FFFFFFFF';
 
-export async function GET() {
+function cell(value: unknown): string {
+  const s = value == null ? '' : String(value);
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+export async function GET(req: Request) {
+  const format = new URL(req.url).searchParams.get('format') === 'csv' ? 'csv' : 'xlsx';
+
   const supabaseAuth = await createSupabaseServer();
   const { data: { user } } = await supabaseAuth.auth.getUser();
   if (!user) return new Response('Non authentifié', { status: 401 });
@@ -64,6 +71,43 @@ export async function GET() {
 
   const monthLabel = `${MONTHS_FR[now.getMonth()]} ${now.getFullYear()}`;
   const pad = (n: number) => String(n).padStart(2, '0');
+
+  // ─── Format CSV ─────────────────────────────────────────────────────────────
+  if (format === 'csv') {
+    const rows: string[] = [];
+    rows.push([cell(`${businessName} — Statistiques`), cell(monthLabel)].join(','));
+    rows.push('');
+    rows.push('Résumé,');
+    rows.push([cell('Total membres'), cell(totalMembers)].join(','));
+    rows.push([cell('Cartes actives'), cell(activeMembers)].join(','));
+    rows.push([cell('Récompenses prêtes'), cell(rewardsReady)].join(','));
+    rows.push([cell('Tampons ce mois'), cell(monthPunches.length)].join(','));
+    rows.push([cell('Nouveaux membres ce mois'), cell(newThisMonth)].join(','));
+    rows.push('');
+    rows.push('Détail par jour,');
+    rows.push([cell('Date'), cell('Tampons')].join(','));
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(d)}`;
+      rows.push([cell(date), cell(perDay[d])].join(','));
+    }
+    rows.push('');
+    rows.push('Membres,');
+    rows.push([cell('Prénom'), cell('Nom'), cell('Courriel'), cell('Tampons'), cell('Statut'), cell('Récompense prête')].join(','));
+    allMembers.forEach((m) => {
+      rows.push([
+        cell(m.first_name), cell(m.last_name), cell(m.email),
+        cell(m.punches), cell(m.status), cell(m.reward_available ? 'oui' : 'non'),
+      ].join(','));
+    });
+
+    const csv = '﻿' + rows.join('\n');
+    return new Response(csv, {
+      headers: {
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': `attachment; filename="stats-${now.getFullYear()}-${pad(now.getMonth() + 1)}.csv"`,
+      },
+    });
+  }
 
   // ─── Construction du classeur ──────────────────────────────────────────────
   const wb = new ExcelJS.Workbook();
