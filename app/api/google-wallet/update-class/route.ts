@@ -26,13 +26,18 @@ export async function PATCH(req: Request) {
     const supabase = getSupabase();
     const { data: client } = await supabase
       .from('clients')
-      .select('google_wallet_class_id')
+      .select('google_wallet_class_id,latitude,longitude')
       .eq('id', user.id)
       .single();
 
     const classId = client?.google_wallet_class_id ?? buildClassId(user.id);
 
-    await updateLoyaltyClass(classId, body);
+    // Répercute la position du magasin (notifications de proximité) si définie
+    const locations = client?.latitude != null && client?.longitude != null
+      ? [{ latitude: client.latitude, longitude: client.longitude }]
+      : undefined;
+
+    await updateLoyaltyClass(classId, { ...body, locations });
 
     return Response.json({ ok: true });
   } catch (err: unknown) {

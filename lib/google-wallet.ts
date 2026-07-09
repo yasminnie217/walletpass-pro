@@ -7,12 +7,18 @@ const SCOPE = 'https://www.googleapis.com/auth/wallet_object.issuer';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
+export interface StoreLocation {
+  latitude: number;
+  longitude: number;
+}
+
 export interface LoyaltyClassParams {
   classId: string;
   programName: string;
   issuerName: string;
   logoUrl: string;
   hexBackgroundColor: string;
+  locations?: StoreLocation[];
 }
 
 export interface LoyaltyObjectParams {
@@ -125,6 +131,12 @@ export async function createLoyaltyClass(params: LoyaltyClassParams) {
     accountIdLabel: 'Membre',
     accountNameLabel: 'Nom',
     loyaltyPoints: { label: 'Tampons' },
+    ...(params.locations?.length && {
+      locations: params.locations.map((l) => ({
+        latitude: l.latitude,
+        longitude: l.longitude,
+      })),
+    }),
   };
 
   return walletRequest('POST', '/loyaltyClass', loyaltyClass);
@@ -151,6 +163,12 @@ export async function updateLoyaltyClass(
           defaultValue: { language: 'fr-CA', value: `Logo ${params.programName ?? ''}` },
         },
       },
+    }),
+    ...(params.locations && {
+      locations: params.locations.map((l) => ({
+        latitude: l.latitude,
+        longitude: l.longitude,
+      })),
     }),
   };
 

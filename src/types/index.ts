@@ -9,6 +9,9 @@ export interface Client {
   organization_name: string | null;
   total_stamps: number;
   reward_description: string;
+  latitude: number | null;
+  longitude: number | null;
+  store_address: string | null;
   created_at: string;
 }
 

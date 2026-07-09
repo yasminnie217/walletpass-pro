@@ -25,7 +25,7 @@ export async function POST(req: Request) {
 
     const { data: client, error } = await supabase
       .from('clients')
-      .select('id,business_name,organization_name,card_name,logo_url,primary_color')
+      .select('id,business_name,organization_name,card_name,logo_url,primary_color,latitude,longitude')
       .eq('id', clientId)
       .single();
 
@@ -35,12 +35,17 @@ export async function POST(req: Request) {
 
     const classId = buildClassId(clientId);
 
+    const locations = client.latitude != null && client.longitude != null
+      ? [{ latitude: client.latitude, longitude: client.longitude }]
+      : undefined;
+
     await createLoyaltyClass({
       classId,
       programName: client.card_name || client.business_name || 'Carte Fidélité',
       issuerName: client.organization_name || client.business_name || 'WalletPass Pro',
       logoUrl: client.logo_url || FALLBACK_LOGO,
       hexBackgroundColor: client.primary_color || '#00704A',
+      locations,
     });
 
     await supabase

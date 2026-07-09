@@ -82,6 +82,9 @@ export default function Onboarding() {
     primary_color: form.primary_color,
     logo_url: logoUrl,
     google_wallet_class_id: null,
+    latitude: null,
+    longitude: null,
+    store_address: null,
     created_at: new Date().toISOString(),
   };
 

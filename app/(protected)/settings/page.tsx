@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Save, Loader2, LogOut, Upload } from 'lucide-react';
+import { Save, Loader2, LogOut, Upload, MapPin, Crosshair } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useClient } from '@/src/hooks/useClient';
 import { useAuth } from '@/src/hooks/useAuth';
 import { Sidebar } from '@/src/components/Sidebar';
+import { parseGoogleMapsUrl } from '@/src/lib/utils';
 
 export default function Settings() {
   const router = useRouter();
@@ -14,6 +15,8 @@ export default function Settings() {
   const { client, updateClient } = useClient();
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [locating, setLocating] = useState(false);
+  const [mapsLink, setMapsLink] = useState('');
   const [origin, setOrigin] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -22,6 +25,9 @@ export default function Settings() {
     email: '',
     logo_url: '',
     primary_color: '#00704A',
+    latitude: null as number | null,
+    longitude: null as number | null,
+    store_address: '',
   });
 
   useEffect(() => {
@@ -35,6 +41,9 @@ export default function Settings() {
         email: client.email || '',
         logo_url: client.logo_url || '',
         primary_color: client.primary_color || '#00704A',
+        latitude: client.latitude ?? null,
+        longitude: client.longitude ?? null,
+        store_address: client.store_address || '',
       });
     }
   }, [client]);
@@ -47,6 +56,9 @@ export default function Settings() {
         business_name: form.business_name,
         logo_url: form.logo_url || null,
         primary_color: form.primary_color,
+        latitude: form.latitude,
+        longitude: form.longitude,
+        store_address: form.store_address || null,
       });
 
       // Répercute le logo et la couleur sur la carte Google Wallet
@@ -93,6 +105,46 @@ export default function Settings() {
       setUploading(false);
       input.value = ''; // permet de re-sélectionner le même fichier
     }
+  };
+
+  const handleUseCurrentLocation = () => {
+    if (!('geolocation' in navigator)) {
+      toast.error("La géolocalisation n'est pas disponible sur cet appareil.");
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setForm(f => ({
+          ...f,
+          latitude: Number(pos.coords.latitude.toFixed(6)),
+          longitude: Number(pos.coords.longitude.toFixed(6)),
+          store_address: 'Position actuelle',
+        }));
+        setLocating(false);
+        toast.success('Position captée. N’oubliez pas d’enregistrer.');
+      },
+      () => {
+        setLocating(false);
+        toast.error("Impossible d'obtenir la position (permission refusée ?).");
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
+  const handleMapsLink = () => {
+    const coords = parseGoogleMapsUrl(mapsLink);
+    if (!coords) {
+      toast.error('Lien non reconnu. Collez le lien Google Maps complet (avec les coordonnées).');
+      return;
+    }
+    setForm(f => ({
+      ...f,
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+      store_address: mapsLink,
+    }));
+    toast.success('Coordonnées extraites. N’oubliez pas d’enregistrer.');
   };
 
   const handleSignOut = async () => {
@@ -171,6 +223,60 @@ export default function Settings() {
                   />
                 </div>
               </div>
+              {/* Position du magasin — notifications de proximité */}
+              <div className="border-t border-gray-100 pt-4">
+                <label className="block text-sm font-medium text-ink mb-1">Position du magasin</label>
+                <p className="text-xs text-mist mb-3">
+                  Permet à Google Wallet d&apos;afficher la carte du membre sur son écran de
+                  verrouillage quand il passe près de votre commerce.
+                </p>
+
+                <div className="flex flex-col sm:flex-row gap-2 mb-2">
+                  <button
+                    type="button"
+                    onClick={handleUseCurrentLocation}
+                    disabled={locating}
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-ink hover:border-matcha hover:text-matcha transition-all disabled:opacity-60"
+                  >
+                    {locating ? <Loader2 size={16} className="animate-spin" /> : <Crosshair size={16} />}
+                    Utiliser ma position actuelle
+                  </button>
+                </div>
+
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={mapsLink}
+                    onChange={e => setMapsLink(e.target.value)}
+                    placeholder="Ou collez un lien Google Maps…"
+                    className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-matcha/30 focus:border-matcha"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleMapsLink}
+                    className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-ink hover:bg-cream transition-all whitespace-nowrap"
+                  >
+                    Extraire
+                  </button>
+                </div>
+
+                {form.latitude != null && form.longitude != null && (
+                  <div className="flex items-center gap-2 mt-3 text-sm text-ink">
+                    <MapPin size={15} style={{ color: '#00704A' }} />
+                    <span style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '12px' }}>
+                      {form.latitude.toFixed(5)}, {form.longitude.toFixed(5)}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setForm(f => ({ ...f, latitude: null, longitude: null, store_address: '' }))}
+                      className="text-mist hover:text-error text-xs ml-1"
+                    >
+                      Retirer
+                    </button>
+                  </div>
+                )}
+              </div>
+
               <button
                 type="submit"
                 disabled={saving}

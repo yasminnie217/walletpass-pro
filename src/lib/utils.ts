@@ -30,6 +30,30 @@ export function getInitials(firstName: string, lastName: string) {
   return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
 }
 
+/**
+ * Extrait les coordonnées (lat, lng) d'un lien Google Maps complet.
+ * Gère les formats @lat,lng — !3dlat!4dlng — q=lat,lng — query=lat,lng — ll=lat,lng.
+ * Renvoie null si aucune coordonnée trouvée (ex. lien raccourci goo.gl/maps).
+ */
+export function parseGoogleMapsUrl(url: string): { latitude: number; longitude: number } | null {
+  const patterns = [
+    /@(-?\d+\.\d+),(-?\d+\.\d+)/,        // .../@45.5017,-73.5673,15z
+    /!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/,    // ...!3d45.5017!4d-73.5673
+    /[?&](?:q|query|ll)=(-?\d+\.\d+),(-?\d+\.\d+)/, // ...?q=45.5017,-73.5673
+  ];
+  for (const re of patterns) {
+    const m = url.match(re);
+    if (m) {
+      const latitude = parseFloat(m[1]);
+      const longitude = parseFloat(m[2]);
+      if (!Number.isNaN(latitude) && !Number.isNaN(longitude)) {
+        return { latitude, longitude };
+      }
+    }
+  }
+  return null;
+}
+
 export function exportToCSV(data: Record<string, unknown>[], filename: string) {
   if (!data.length) return;
   const BOM = '﻿';
