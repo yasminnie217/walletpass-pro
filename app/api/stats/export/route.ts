@@ -41,7 +41,7 @@ export async function GET(req: Request) {
     supabase.from('clients').select('business_name').eq('id', user.id).single(),
     supabase
       .from('members')
-      .select('first_name,last_name,email,punches,status,reward_available,created_at')
+      .select('first_name,last_name,email,punches,status,reward_available,joined_at')
       .eq('client_id', user.id),
     supabase
       .from('punches')
@@ -59,7 +59,7 @@ export async function GET(req: Request) {
   const activeMembers = allMembers.filter((m) => m.status === 'active').length;
   const rewardsReady = allMembers.filter((m) => m.reward_available).length;
   const newThisMonth = allMembers.filter(
-    (m) => m.created_at && new Date(m.created_at) >= start
+    (m) => m.joined_at && new Date(m.joined_at) >= start
   ).length;
 
   const perDay: Record<number, number> = {};
