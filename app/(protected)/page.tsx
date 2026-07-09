@@ -45,7 +45,7 @@ export default function Dashboard() {
       const a = document.createElement('a');
       a.href = url;
       const now = new Date();
-      a.download = `stats-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}.csv`;
+      a.download = `stats-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}.xlsx`;
       a.click();
       URL.revokeObjectURL(url);
     } catch {
@@ -116,7 +116,7 @@ export default function Dashboard() {
                 style={{ background: '#00704A' }}
               >
                 <Download size={15} />
-                {exporting ? 'Export…' : 'Exporter le mois (CSV)'}
+                {exporting ? 'Export…' : 'Exporter le mois (Excel)'}
               </button>
               <span
                 className="px-3 py-1 rounded-full text-xs font-semibold"
