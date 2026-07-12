@@ -1,75 +1,94 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { Search, Loader2 } from 'lucide-react';
 
-// Chargement unique du script Google Maps (Places)
-let loaderPromise: Promise<void> | null = null;
-function loadGoogleMaps(key: string): Promise<void> {
-  if (typeof window === 'undefined') return Promise.resolve();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  if ((window as any).google?.maps?.places) return Promise.resolve();
-  if (loaderPromise) return loaderPromise;
-  loaderPromise = new Promise((resolve, reject) => {
-    const s = document.createElement('script');
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&language=fr`;
-    s.async = true;
-    s.onload = () => resolve();
-    s.onerror = () => reject(new Error('Échec du chargement de Google Maps'));
-    document.head.appendChild(s);
-  });
-  return loaderPromise;
+interface Result {
+  latitude: number;
+  longitude: number;
+  address: string;
 }
 
 interface Props {
-  onSelect: (r: { latitude: number; longitude: number; address: string }) => void;
+  onSelect: (r: Result) => void;
 }
 
+/** Recherche d'adresse gratuite (OpenStreetMap) avec suggestions. */
 export function AddressAutocomplete({ onSelect }: Props) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const onSelectRef = useRef(onSelect);
-  onSelectRef.current = onSelect;
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<Result[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const skipNext = useRef(false);
 
-  const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-
+  // Recherche déclenchée après une pause de frappe (debounce)
   useEffect(() => {
-    if (!key || !inputRef.current) return;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let ac: any;
-    loadGoogleMaps(key)
-      .then(() => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const g = (window as any).google;
-        if (!g?.maps?.places || !inputRef.current) return;
-        ac = new g.maps.places.Autocomplete(inputRef.current, {
-          fields: ['geometry', 'formatted_address', 'name'],
-        });
-        ac.addListener('place_changed', () => {
-          const place = ac.getPlace();
-          const loc = place.geometry?.location;
-          if (!loc) return;
-          onSelectRef.current({
-            latitude: Number(loc.lat().toFixed(6)),
-            longitude: Number(loc.lng().toFixed(6)),
-            address: place.formatted_address || place.name || '',
-          });
-        });
-      })
-      .catch(() => {});
-    return () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const g = (window as any).google;
-      if (ac && g?.maps?.event) g.maps.event.clearInstanceListeners(ac);
-    };
-  }, [key]);
+    if (skipNext.current) { skipNext.current = false; return; }
+    const q = query.trim();
+    if (q.length < 3) { setResults([]); return; }
 
-  if (!key) return null;
+    const t = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/geocode?q=${encodeURIComponent(q)}`);
+        const data = (await res.json()) as Result[];
+        setResults(data);
+        setOpen(true);
+      } catch {
+        setResults([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 450);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  // Fermeture au clic à l'extérieur
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, []);
+
+  const choose = (r: Result) => {
+    skipNext.current = true;
+    setQuery(r.address);
+    setResults([]);
+    setOpen(false);
+    onSelect(r);
+  };
 
   return (
-    <input
-      ref={inputRef}
-      type="text"
-      placeholder="Rechercher l'adresse du magasin…"
-      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-matcha/30 focus:border-matcha"
-    />
+    <div ref={boxRef} className="relative">
+      <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-mist" />
+      <input
+        type="text"
+        value={query}
+        onChange={e => setQuery(e.target.value)}
+        onFocusCapture={() => results.length && setOpen(true)}
+        placeholder="Rechercher l'adresse du magasin…"
+        className="w-full pl-10 pr-9 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-matcha/30 focus:border-matcha"
+      />
+      {loading && <Loader2 size={16} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-mist" />}
+
+      {open && results.length > 0 && (
+        <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-64 overflow-y-auto">
+          {results.map((r, i) => (
+            <li key={i}>
+              <button
+                type="button"
+                onClick={() => choose(r)}
+                className="w-full text-left px-4 py-2.5 text-sm text-ink hover:bg-cream transition-colors"
+              >
+                {r.address}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
