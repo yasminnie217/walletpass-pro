@@ -146,33 +146,31 @@ export async function updateLoyaltyClass(
   classId: string,
   params: Partial<Omit<LoyaltyClassParams, 'classId'>>
 ) {
-  const existing = await walletRequest<Record<string, unknown>>(
-    'GET',
-    `/loyaltyClass/${encodeURIComponent(classId)}`
-  );
+  // Mise à jour partielle (PATCH) : on n'envoie que les champs modifiés.
+  // reviewStatus UNDER_REVIEW est requis par Google pour éditer une classe déjà
+  // approuvée (un PUT complet renverrait "approved", refusé en écriture). La classe
+  // publiée reste approuvée après coup.
+  const patch: Record<string, unknown> = { reviewStatus: 'UNDER_REVIEW' };
 
-  const updated = {
-    ...existing,
-    ...(params.programName && { programName: params.programName }),
-    ...(params.issuerName && { issuerName: params.issuerName }),
-    ...(params.hexBackgroundColor && { hexBackgroundColor: params.hexBackgroundColor }),
-    ...(params.logoUrl && {
-      programLogo: {
-        sourceUri: { uri: params.logoUrl },
-        contentDescription: {
-          defaultValue: { language: 'fr-CA', value: `Logo ${params.programName ?? ''}` },
-        },
+  if (params.programName) patch.programName = params.programName;
+  if (params.issuerName) patch.issuerName = params.issuerName;
+  if (params.hexBackgroundColor) patch.hexBackgroundColor = params.hexBackgroundColor;
+  if (params.logoUrl) {
+    patch.programLogo = {
+      sourceUri: { uri: params.logoUrl },
+      contentDescription: {
+        defaultValue: { language: 'fr-CA', value: `Logo ${params.programName ?? ''}` },
       },
-    }),
-    ...(params.locations && {
-      locations: params.locations.map((l) => ({
-        latitude: l.latitude,
-        longitude: l.longitude,
-      })),
-    }),
-  };
+    };
+  }
+  if (params.locations) {
+    patch.locations = params.locations.map((l) => ({
+      latitude: l.latitude,
+      longitude: l.longitude,
+    }));
+  }
 
-  return walletRequest('PUT', `/loyaltyClass/${encodeURIComponent(classId)}`, updated);
+  return walletRequest('PATCH', `/loyaltyClass/${encodeURIComponent(classId)}`, patch);
 }
 
 // ─── LoyaltyObject ───────────────────────────────────────────────────────────
