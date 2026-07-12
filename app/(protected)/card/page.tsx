@@ -72,6 +72,8 @@ export default function Card() {
             }),
           });
         }
+        // Réapplique le total de tampons requis sur toutes les cartes membres
+        await fetch('/api/google-wallet/refresh-objects', { method: 'POST' });
       } catch {
         // non-blocking
       }
