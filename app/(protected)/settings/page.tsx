@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useClient } from '@/src/hooks/useClient';
 import { useAuth } from '@/src/hooks/useAuth';
 import { Sidebar } from '@/src/components/Sidebar';
-import { parseGoogleMapsUrl } from '@/src/lib/utils';
+import { AddressAutocomplete } from '@/src/components/AddressAutocomplete';
 
 export default function Settings() {
   const router = useRouter();
@@ -16,7 +16,6 @@ export default function Settings() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [locating, setLocating] = useState(false);
-  const [mapsLink, setMapsLink] = useState('');
   const [origin, setOrigin] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -132,19 +131,14 @@ export default function Settings() {
     );
   };
 
-  const handleMapsLink = () => {
-    const coords = parseGoogleMapsUrl(mapsLink);
-    if (!coords) {
-      toast.error('Lien non reconnu. Collez le lien Google Maps complet (avec les coordonnées).');
-      return;
-    }
+  const handleAddressSelect = (r: { latitude: number; longitude: number; address: string }) => {
     setForm(f => ({
       ...f,
-      latitude: coords.latitude,
-      longitude: coords.longitude,
-      store_address: mapsLink,
+      latitude: r.latitude,
+      longitude: r.longitude,
+      store_address: r.address,
     }));
-    toast.success('Coordonnées extraites. N’oubliez pas d’enregistrer.');
+    toast.success('Adresse trouvée. N’oubliez pas d’enregistrer.');
   };
 
   const handleSignOut = async () => {
@@ -231,34 +225,26 @@ export default function Settings() {
                   verrouillage quand il passe près de votre commerce.
                 </p>
 
-                <div className="flex flex-col sm:flex-row gap-2 mb-2">
-                  <button
-                    type="button"
-                    onClick={handleUseCurrentLocation}
-                    disabled={locating}
-                    className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-ink hover:border-matcha hover:text-matcha transition-all disabled:opacity-60"
-                  >
-                    {locating ? <Loader2 size={16} className="animate-spin" /> : <Crosshair size={16} />}
-                    Utiliser ma position actuelle
-                  </button>
+                {/* Recherche d'adresse Google Maps */}
+                <div className="mb-2">
+                  <AddressAutocomplete onSelect={handleAddressSelect} />
                 </div>
 
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={mapsLink}
-                    onChange={e => setMapsLink(e.target.value)}
-                    placeholder="Ou collez un lien Google Maps…"
-                    className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-matcha/30 focus:border-matcha"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleMapsLink}
-                    className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-ink hover:bg-cream transition-all whitespace-nowrap"
-                  >
-                    Extraire
-                  </button>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="flex-1 h-px bg-gray-100" />
+                  <span className="text-xs text-mist">ou</span>
+                  <div className="flex-1 h-px bg-gray-100" />
                 </div>
+
+                <button
+                  type="button"
+                  onClick={handleUseCurrentLocation}
+                  disabled={locating}
+                  className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-ink hover:border-matcha hover:text-matcha transition-all disabled:opacity-60"
+                >
+                  {locating ? <Loader2 size={16} className="animate-spin" /> : <Crosshair size={16} />}
+                  Utiliser ma position actuelle
+                </button>
 
                 {form.latitude != null && form.longitude != null && (
                   <div className="flex items-center gap-2 mt-3 text-sm text-ink">
