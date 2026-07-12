@@ -67,8 +67,8 @@ export default function Card() {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              classId: client.google_wallet_class_id,
               programName: form.card_name,
+              issuerName: form.organization_name,
             }),
           });
         }
