@@ -34,6 +34,7 @@ export async function POST(req: Request) {
     if (error) throw error;
 
     const header = title || 'Nouveau message';
+    console.log(`[send-notification] client ${clientId} — ${members?.length ?? 0} carte(s) ciblée(s), header="${header}"`);
     let sent = 0;
     let failed = 0;
 
@@ -42,12 +43,15 @@ export async function POST(req: Request) {
         try {
           await addMessageToObject(m.google_wallet_object_id!, header, message);
           sent++;
-        } catch {
+        } catch (err: unknown) {
           failed++;
+          const e = err as { message?: string };
+          console.error(`[send-notification] échec objet ${m.google_wallet_object_id}:`, e.message);
         }
       })
     );
 
+    console.log(`[send-notification] résultat: ${sent} envoyé(s), ${failed} échec(s)`);
     return Response.json({ sent, failed, total: members?.length ?? 0 });
   } catch (err: unknown) {
     const e = err as { message?: string };

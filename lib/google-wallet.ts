@@ -252,7 +252,7 @@ export async function generateSaveUrl(objectParams: LoyaltyObjectParams): Promis
 // ─── Messages (notifications push) ───────────────────────────────────────────
 
 export async function addMessageToObject(objectId: string, header: string, body: string) {
-  return walletRequest(
+  const result = await walletRequest(
     'POST',
     `/loyaltyObject/${encodeURIComponent(objectId)}/addMessage`,
     {
@@ -266,6 +266,9 @@ export async function addMessageToObject(objectId: string, header: string, body:
       },
     }
   );
+  // Log de diagnostic : réponse brute de Google à l'ajout du message
+  console.log(`[addMessage] objet ${objectId} → réponse Google:`, JSON.stringify(result));
+  return result;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
