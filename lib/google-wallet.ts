@@ -260,7 +260,9 @@ export async function addMessageToObject(objectId: string, header: string, body:
         id: `msg_${Date.now()}`,
         header,
         body,
-        messageType: 'TEXT',
+        // TEXT_AND_NOTIFY = déclenche une vraie notification push sur le téléphone
+        // (TEXT afficherait seulement au dos de la carte). Limite Google : 3 push / 24 h / carte.
+        messageType: 'TEXT_AND_NOTIFY',
       },
     }
   );
