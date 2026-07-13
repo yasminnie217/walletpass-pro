@@ -197,18 +197,26 @@ export async function createLoyaltyObject(params: LoyaltyObjectParams) {
 }
 
 export async function updateLoyaltyObject(objectId: string, data: UpdateObjectParams) {
-  const patch: Record<string, unknown> = {};
+  // GET + PUT complet : un PATCH fusionne la balance et Google refuse d'avoir
+  // à la fois un int et un string ("More than one type of loyalty point balances").
+  // Le PUT remplace loyaltyPoints entièrement, ce qui permet de passer de "3" à "3 / 8".
+  const existing = await walletRequest<Record<string, unknown>>(
+    'GET',
+    `/loyaltyObject/${encodeURIComponent(objectId)}`
+  );
+
+  const updated: Record<string, unknown> = { ...existing };
 
   if (data.points !== undefined) {
-    patch.loyaltyPoints = { label: 'Tampons', balance: pointsBalance(data.points, data.totalStamps) };
+    updated.loyaltyPoints = { label: 'Tampons', balance: pointsBalance(data.points, data.totalStamps) };
   }
-  if (data.memberName !== undefined) patch.accountName = data.memberName;
-  if (data.state !== undefined) patch.state = data.state;
+  if (data.memberName !== undefined) updated.accountName = data.memberName;
+  if (data.state !== undefined) updated.state = data.state;
 
   return walletRequest(
-    'PATCH',
+    'PUT',
     `/loyaltyObject/${encodeURIComponent(objectId)}`,
-    patch
+    updated
   );
 }
 
