@@ -69,9 +69,12 @@ export default function Members() {
   const handleRedeem = async (member: Member) => {
     setRedeemingId(member.id);
     try {
+      const remaining = Math.max(0, (member.punches || 0) - totalStamps);
+      const stillReward = remaining >= totalStamps;
+
       await updateMember.mutateAsync({
         id: member.id,
-        updates: { punches: 0, reward_available: false },
+        updates: { punches: remaining, reward_available: stillReward },
       });
 
       if (member.google_wallet_object_id) {
@@ -79,12 +82,12 @@ export default function Members() {
           await fetch('/api/google-wallet/add-punch', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ memberId: member.id, newPoints: 0 }),
+            body: JSON.stringify({ memberId: member.id, newPoints: remaining }),
           });
         } catch { /* non-blocking */ }
       }
 
-      toast.success(`Récompense utilisée pour ${member.first_name}. Carte remise à zéro!`);
+      toast.success(`Récompense utilisée pour ${member.first_name}. Solde : ${remaining}/${totalStamps}.`);
     } catch {
       toast.error('Erreur lors de la réinitialisation.');
     } finally {

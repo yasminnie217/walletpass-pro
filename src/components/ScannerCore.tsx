@@ -162,23 +162,27 @@ export function ScannerCore() {
     if (!result) return;
     setRedeeming(true);
     try {
+      // Déduit le total requis en conservant le surplus (ex. 11/10 → 1/10)
+      const remaining = Math.max(0, result.newPunches - totalStamps);
+      const stillReward = remaining >= totalStamps;
+
       await supabase
         .from('members')
-        .update({ punches: 0, reward_available: false })
+        .update({ punches: remaining, reward_available: stillReward })
         .eq('id', result.member.id);
 
-      // Remet aussi la carte Google Wallet à 0 (non-bloquant)
+      // Met à jour la carte Google Wallet (non-bloquant)
       if (result.member.google_wallet_object_id) {
         try {
           await fetch('/api/google-wallet/add-punch', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ memberId: result.member.id, newPoints: 0 }),
+            body: JSON.stringify({ memberId: result.member.id, newPoints: remaining }),
           });
         } catch { /* non-blocking */ }
       }
 
-      toast.success(`Récompense utilisée pour ${result.member.first_name}. Carte remise à zéro!`);
+      toast.success(`Récompense utilisée pour ${result.member.first_name}. Solde : ${remaining}/${totalStamps}.`);
       setResult(null);
       setState('idle');
     } catch {

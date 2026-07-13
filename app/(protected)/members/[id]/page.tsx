@@ -43,20 +43,23 @@ export default function MemberDetail() {
     if (!member) return;
     setRedeeming(true);
     try {
-      await supabase.from('members').update({ punches: 0, reward_available: false }).eq('id', member.id);
+      const remaining = Math.max(0, member.punches - totalStamps);
+      const stillReward = remaining >= totalStamps;
+
+      await supabase.from('members').update({ punches: remaining, reward_available: stillReward }).eq('id', member.id);
 
       if (member.google_wallet_object_id) {
         try {
           await fetch('/api/google-wallet/add-punch', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ memberId: member.id, newPoints: 0 }),
+            body: JSON.stringify({ memberId: member.id, newPoints: remaining }),
           });
         } catch { /* non-blocking */ }
       }
 
-      setMember(m => m ? { ...m, punches: 0, reward_available: false } : m);
-      toast.success('Récompense utilisée. Carte remise à zéro!');
+      setMember(m => m ? { ...m, punches: remaining, reward_available: stillReward } : m);
+      toast.success(`Récompense utilisée. Solde : ${remaining}/${totalStamps}.`);
     } catch {
       toast.error('Erreur lors de la réinitialisation.');
     } finally {
