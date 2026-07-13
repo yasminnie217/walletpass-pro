@@ -1,15 +1,16 @@
-import { supabase } from './supabase';
-
 /** Enregistre l'utilisation d'une récompense dans l'historique (non-bloquant). */
 export async function recordRedemption(
   memberId: string,
-  clientId: string,
+  _clientId: string,
   rewardDescription?: string | null
 ) {
-  const { error } = await supabase.from('redemptions').insert({
-    member_id: memberId,
-    client_id: clientId,
-    reward_description: rewardDescription ?? null,
-  });
-  if (error) console.error('[recordRedemption]', error.message);
+  try {
+    await fetch('/api/redemptions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ memberId, rewardDescription }),
+    });
+  } catch (err) {
+    console.error('[recordRedemption]', err);
+  }
 }
