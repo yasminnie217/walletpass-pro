@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/src/lib/supabase';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useClient } from '@/src/hooks/useClient';
+import { recordRedemption } from '@/src/lib/redemptions';
 import type { Member } from '@/src/types';
 
 type ScanState = 'idle' | 'scanning' | 'loading' | 'result';
@@ -170,6 +171,8 @@ export function ScannerCore() {
         .from('members')
         .update({ punches: remaining, reward_available: stillReward })
         .eq('id', result.member.id);
+
+      await recordRedemption(result.member.id, result.member.client_id, client?.reward_description);
 
       // Met à jour la carte Google Wallet (non-bloquant)
       if (result.member.google_wallet_object_id) {

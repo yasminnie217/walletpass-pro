@@ -9,6 +9,7 @@ import { useClient } from '@/src/hooks/useClient';
 import { useAuth } from '@/src/hooks/useAuth';
 import { Sidebar } from '@/src/components/Sidebar';
 import { MemberRow } from '@/src/components/MemberRow';
+import { recordRedemption } from '@/src/lib/redemptions';
 import type { Member } from '@/src/types';
 
 export default function Members() {
@@ -76,6 +77,8 @@ export default function Members() {
         id: member.id,
         updates: { punches: remaining, reward_available: stillReward },
       });
+
+      await recordRedemption(member.id, member.client_id, client?.reward_description);
 
       if (member.google_wallet_object_id) {
         try {

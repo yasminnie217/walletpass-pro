@@ -7,6 +7,7 @@ import { useMembers } from '@/src/hooks/useMembers';
 import { usePunches } from '@/src/hooks/usePunches';
 import { useClient } from '@/src/hooks/useClient';
 import { CashierMemberItem } from '@/src/components/CashierMemberItem';
+import { recordRedemption } from '@/src/lib/redemptions';
 import type { Member } from '@/src/types';
 
 export default function CaisseMembres() {
@@ -67,6 +68,8 @@ export default function CaisseMembres() {
         id: member.id,
         updates: { punches: remaining, reward_available: stillReward },
       });
+
+      await recordRedemption(member.id, member.client_id, client?.reward_description);
 
       if (member.google_wallet_object_id) {
         try {

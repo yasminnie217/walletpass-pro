@@ -40,6 +40,14 @@ export interface Punch {
   members?: { first_name: string; last_name: string };
 }
 
+export interface Redemption {
+  id: string;
+  member_id: string;
+  client_id: string;
+  reward_description: string | null;
+  created_at: string;
+}
+
 export interface Notification {
   id: string;
   client_id: string;

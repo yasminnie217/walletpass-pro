@@ -8,8 +8,9 @@ import { supabase } from '@/src/lib/supabase';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useClient } from '@/src/hooks/useClient';
 import { Sidebar } from '@/src/components/Sidebar';
+import { recordRedemption } from '@/src/lib/redemptions';
 import { timeAgo, formatDate, getInitials } from '@/src/lib/utils';
-import type { Member, Punch } from '@/src/types';
+import type { Member, Punch, Redemption } from '@/src/types';
 
 export default function MemberDetail() {
   const params = useParams();
@@ -20,6 +21,7 @@ export default function MemberDetail() {
 
   const [member, setMember] = useState<Member | null>(null);
   const [punches, setPunches] = useState<Punch[]>([]);
+  const [redemptions, setRedemptions] = useState<Redemption[]>([]);
   const [loading, setLoading] = useState(true);
   const [redeeming, setRedeeming] = useState(false);
 
@@ -28,12 +30,14 @@ export default function MemberDetail() {
   useEffect(() => {
     if (!user || !memberId) return;
     const load = async () => {
-      const [{ data: m }, { data: p }] = await Promise.all([
+      const [{ data: m }, { data: p }, { data: r }] = await Promise.all([
         supabase.from('members').select('*').eq('id', memberId).eq('client_id', user.id).single(),
         supabase.from('punches').select('*').eq('member_id', memberId).order('created_at', { ascending: false }),
+        supabase.from('redemptions').select('*').eq('member_id', memberId).order('created_at', { ascending: false }),
       ]);
       if (m) setMember(m as Member);
       if (p) setPunches(p as Punch[]);
+      if (r) setRedemptions(r as Redemption[]);
       setLoading(false);
     };
     load();
@@ -47,6 +51,12 @@ export default function MemberDetail() {
       const stillReward = remaining >= totalStamps;
 
       await supabase.from('members').update({ punches: remaining, reward_available: stillReward }).eq('id', member.id);
+
+      await recordRedemption(member.id, member.client_id, client?.reward_description);
+      setRedemptions(list => [
+        { id: `tmp_${Date.now()}`, member_id: member.id, client_id: member.client_id, reward_description: client?.reward_description ?? null, created_at: new Date().toISOString() },
+        ...list,
+      ]);
 
       if (member.google_wallet_object_id) {
         try {
@@ -217,6 +227,38 @@ export default function MemberDetail() {
                       <p className="text-mist text-xs">{timeAgo(punch.created_at)}</p>
                     </div>
                     <p className="text-mist text-xs">{formatDate(punch.created_at)}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Reward history */}
+          <div className="bg-white rounded-xl shadow-sm">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+              <h2 className="text-ink font-semibold">Historique des récompenses</h2>
+              <span className="text-mist text-sm">{redemptions.length} utilisée{redemptions.length !== 1 ? 's' : ''}</span>
+            </div>
+            {redemptions.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Gift size={32} className="text-mist/30 mb-3" />
+                <p className="text-mist text-sm">Aucune récompense utilisée pour l&apos;instant.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-50">
+                {redemptions.map((r) => (
+                  <div key={r.id} className="flex items-center gap-4 px-6 py-3">
+                    <div
+                      className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+                      style={{ background: '#CBA25820' }}
+                    >
+                      <Gift size={13} style={{ color: '#CBA258' }} />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-ink text-sm font-medium">{r.reward_description || 'Récompense'}</p>
+                      <p className="text-mist text-xs">{timeAgo(r.created_at)}</p>
+                    </div>
+                    <p className="text-mist text-xs">{formatDate(r.created_at)}</p>
                   </div>
                 ))}
               </div>
