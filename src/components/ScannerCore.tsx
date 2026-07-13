@@ -166,6 +166,18 @@ export function ScannerCore() {
         .from('members')
         .update({ punches: 0, reward_available: false })
         .eq('id', result.member.id);
+
+      // Remet aussi la carte Google Wallet à 0 (non-bloquant)
+      if (result.member.google_wallet_object_id) {
+        try {
+          await fetch('/api/google-wallet/add-punch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ memberId: result.member.id, newPoints: 0 }),
+          });
+        } catch { /* non-blocking */ }
+      }
+
       toast.success(`Récompense utilisée pour ${result.member.first_name}. Carte remise à zéro!`);
       setResult(null);
       setState('idle');

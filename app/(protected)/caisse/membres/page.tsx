@@ -64,6 +64,17 @@ export default function CaisseMembres() {
         id: member.id,
         updates: { punches: 0, reward_available: false },
       });
+
+      if (member.google_wallet_object_id) {
+        try {
+          await fetch('/api/google-wallet/add-punch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ memberId: member.id, newPoints: 0 }),
+          });
+        } catch { /* non-blocking */ }
+      }
+
       toast.success(`Récompense utilisée pour ${member.first_name}. Carte remise à zéro!`);
     } catch {
       toast.error('Erreur lors de la réinitialisation.');
