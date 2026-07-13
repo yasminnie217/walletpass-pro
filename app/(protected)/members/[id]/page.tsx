@@ -24,6 +24,7 @@ export default function MemberDetail() {
   const [redemptions, setRedemptions] = useState<Redemption[]>([]);
   const [loading, setLoading] = useState(true);
   const [redeeming, setRedeeming] = useState(false);
+  const [showAllPunches, setShowAllPunches] = useState(false);
 
   const totalStamps = client?.total_stamps || 5;
 
@@ -213,23 +214,34 @@ export default function MemberDetail() {
                 <p className="text-mist text-sm">Aucun tampon pour l&apos;instant.</p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-50">
-                {punches.map((punch, i) => (
-                  <div key={punch.id} className="flex items-center gap-4 px-6 py-3">
-                    <div
-                      className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
-                      style={{ background: '#00704A15' }}
-                    >
-                      <Stamp size={13} style={{ color: '#00704A' }} />
+              <>
+                <div className="divide-y divide-gray-50">
+                  {(showAllPunches ? punches : punches.slice(0, 3)).map((punch, i) => (
+                    <div key={punch.id} className="flex items-center gap-4 px-6 py-3">
+                      <div
+                        className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+                        style={{ background: '#00704A15' }}
+                      >
+                        <Stamp size={13} style={{ color: '#00704A' }} />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-ink text-sm font-medium">Tampon #{punches.length - i}</p>
+                        <p className="text-mist text-xs">{timeAgo(punch.created_at)}</p>
+                      </div>
+                      <p className="text-mist text-xs">{formatDate(punch.created_at)}</p>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-ink text-sm font-medium">Tampon #{punches.length - i}</p>
-                      <p className="text-mist text-xs">{timeAgo(punch.created_at)}</p>
-                    </div>
-                    <p className="text-mist text-xs">{formatDate(punch.created_at)}</p>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+                {punches.length > 3 && (
+                  <button
+                    onClick={() => setShowAllPunches(v => !v)}
+                    className="w-full py-3 text-sm font-medium border-t border-gray-100 transition-colors hover:bg-cream"
+                    style={{ color: '#00704A' }}
+                  >
+                    {showAllPunches ? 'Afficher moins' : `Afficher plus (${punches.length - 3})`}
+                  </button>
+                )}
+              </>
             )}
           </div>
 
