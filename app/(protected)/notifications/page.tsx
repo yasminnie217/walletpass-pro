@@ -3,14 +3,18 @@
 import { useState } from 'react';
 import { Send, Bell, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import Link from 'next/link';
+import { Crown } from 'lucide-react';
 import { useNotifications } from '@/src/hooks/useNotifications';
 import { useMembers } from '@/src/hooks/useMembers';
+import { usePlan } from '@/src/hooks/usePlan';
 import { Sidebar } from '@/src/components/Sidebar';
 import { NotificationItem } from '@/src/components/NotificationItem';
 
 export default function Notifications() {
   const { notifications, isLoading, sendNotification } = useNotifications();
   const { members } = useMembers();
+  const { hasAccess } = usePlan();
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
@@ -54,6 +58,17 @@ export default function Notifications() {
         </h1>
         <p className="text-mist mb-8">Envoyez une notification à tous vos détenteurs de carte.</p>
 
+        {!hasAccess && (
+          <Link href="/abonnement" className="flex items-center gap-3 rounded-xl p-4 mb-6 transition-all hover:opacity-90"
+            style={{ background: '#CBA25815', border: '1px solid #CBA258' }}>
+            <Crown size={20} style={{ color: '#CBA258' }} />
+            <div className="flex-1">
+              <p className="text-ink font-medium text-sm">Les notifications sont réservées au plan Pro</p>
+              <p className="text-mist text-xs">Passez au Pro pour envoyer des messages à vos membres →</p>
+            </div>
+          </Link>
+        )}
+
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
           {/* Form */}
           <div className="bg-white rounded-xl p-6 shadow-sm">
@@ -93,7 +108,7 @@ export default function Notifications() {
               </p>
               <button
                 type="submit"
-                disabled={sending || !message.trim()}
+                disabled={sending || !message.trim() || !hasAccess}
                 className="flex items-center gap-2 px-6 py-2.5 rounded-full text-white font-medium text-sm transition-all hover:opacity-90 disabled:opacity-60"
                 style={{ background: '#00704A' }}
               >

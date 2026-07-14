@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { addMessageToObject } from '@/lib/google-wallet';
 import { createSupabaseServer } from '@/src/lib/supabase-server';
+import { clientHasAccess } from '@/src/lib/plan-server';
 
 function getSupabase() {
   return createClient(
@@ -23,6 +24,10 @@ export async function POST(req: Request) {
     }
 
     const supabase = getSupabase();
+
+    if (!(await clientHasAccess(supabase, clientId))) {
+      return Response.json({ error: 'plan_required' }, { status: 403 });
+    }
 
     const { data: members, error } = await supabase
       .from('members')

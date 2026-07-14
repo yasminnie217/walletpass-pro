@@ -12,6 +12,8 @@ export interface Client {
   latitude: number | null;
   longitude: number | null;
   store_address: string | null;
+  plan: string;
+  trial_ends_at: string | null;
   created_at: string;
 }
 

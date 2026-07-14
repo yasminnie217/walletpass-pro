@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { createLoyaltyObject, generateSaveUrl, buildObjectId } from '@/lib/google-wallet';
+import { planStatus, FREE_MEMBER_CAP } from '@/src/lib/plan';
 
 function getSupabase() {
   return createClient(
@@ -28,9 +29,23 @@ export async function POST(req: Request) {
     // Récupère la LoyaltyClass du commerçant
     const { data: clientRow } = await supabase
       .from('clients')
-      .select('google_wallet_class_id,card_name,organization_name,business_name,total_stamps')
+      .select('google_wallet_class_id,card_name,organization_name,business_name,total_stamps,plan,trial_ends_at')
       .eq('id', clientId)
       .single();
+
+    // Plan gratuit : plafond de membres
+    if (!planStatus(clientRow).hasAccess) {
+      const { count } = await supabase
+        .from('members')
+        .select('id', { count: 'exact', head: true })
+        .eq('client_id', clientId);
+      if ((count ?? 0) >= FREE_MEMBER_CAP) {
+        return Response.json(
+          { error: 'Ce programme de fidélité a atteint sa capacité. Contactez le commerce.' },
+          { status: 403 }
+        );
+      }
+    }
 
     // Membre déjà inscrit → on ne recrée rien, on renvoie sa carte pour qu'il puisse
     // réactiver ses notifications et récupérer son bouton Wallet.

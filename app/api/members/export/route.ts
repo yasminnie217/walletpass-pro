@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { createSupabaseServer } from '@/src/lib/supabase-server';
+import { clientHasAccess } from '@/src/lib/plan-server';
 import ExcelJS from 'exceljs';
 
 function getSupabase() {
@@ -27,6 +28,9 @@ export async function GET(req: Request) {
   if (!user) return new Response('Non authentifié', { status: 401 });
 
   const supabase = getSupabase();
+  if (!(await clientHasAccess(supabase, user.id))) {
+    return new Response('Fonction réservée au plan Pro', { status: 403 });
+  }
   const [{ data: clientData }, { data: members }] = await Promise.all([
     supabase.from('clients').select('business_name').eq('id', user.id).single(),
     supabase

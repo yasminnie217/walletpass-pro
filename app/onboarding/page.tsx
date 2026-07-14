@@ -85,6 +85,8 @@ export default function Onboarding() {
     latitude: null,
     longitude: null,
     store_address: null,
+    plan: 'free',
+    trial_ends_at: null,
     created_at: new Date().toISOString(),
   };
 

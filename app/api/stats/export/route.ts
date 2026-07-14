@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { createSupabaseServer } from '@/src/lib/supabase-server';
+import { clientHasAccess } from '@/src/lib/plan-server';
 import ExcelJS from 'exceljs';
 
 function getSupabase() {
@@ -32,6 +33,9 @@ export async function GET(req: Request) {
   if (!user) return new Response('Non authentifié', { status: 401 });
 
   const supabase = getSupabase();
+  if (!(await clientHasAccess(supabase, user.id))) {
+    return new Response('Fonction réservée au plan Pro', { status: 403 });
+  }
   const now = new Date();
   const start = new Date(now.getFullYear(), now.getMonth(), 1);
   const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);

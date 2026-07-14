@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Camera, CreditCard, Users, Bell, Settings, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Camera, CreditCard, Users, Bell, Settings, Menu, X, Crown } from 'lucide-react';
+import { usePlan } from '@/src/hooks/usePlan';
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Tableau de bord', exact: true },
@@ -12,7 +13,26 @@ const navItems = [
   { href: '/members', icon: Users, label: 'Membres' },
   { href: '/notifications', icon: Bell, label: 'Notifications' },
   { href: '/settings', icon: Settings, label: 'Paramètres' },
+  { href: '/abonnement', icon: Crown, label: 'Abonnement' },
 ];
+
+function PlanBanner({ onNavigate }: { onNavigate?: () => void }) {
+  const { isPro, isTrialing, trialDaysLeft } = usePlan();
+  if (isPro) return null;
+  return (
+    <Link
+      href="/abonnement"
+      onClick={onNavigate}
+      className="block mx-3 mb-3 rounded-lg px-3 py-2.5 transition-all hover:opacity-90"
+      style={{ background: 'rgba(203,162,88,0.15)', border: '1px solid rgba(203,162,88,0.4)' }}
+    >
+      <p className="text-xs font-semibold" style={{ color: '#CBA258' }}>
+        {isTrialing ? `Essai — ${trialDaysLeft} j restant${trialDaysLeft > 1 ? 's' : ''}` : 'Plan gratuit'}
+      </p>
+      <p className="text-white/70 text-xs mt-0.5">Passer au Pro →</p>
+    </Link>
+  );
+}
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
@@ -72,6 +92,7 @@ export function Sidebar() {
           <Brand />
         </div>
         <NavLinks />
+        <PlanBanner />
         <div className="px-6 py-4 border-t border-white/10">
           <p className="text-white/30 text-xs">© 2026 Fidely</p>
         </div>
@@ -104,6 +125,7 @@ export function Sidebar() {
               </button>
             </div>
             <NavLinks onNavigate={() => setOpen(false)} />
+            <PlanBanner onNavigate={() => setOpen(false)} />
             <div className="px-6 py-4 border-t border-white/10">
               <p className="text-white/30 text-xs">© 2026 Fidely</p>
             </div>

@@ -6,13 +6,17 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useClient } from '@/src/hooks/useClient';
 import { useAuth } from '@/src/hooks/useAuth';
+import Link from 'next/link';
+import { Crown } from 'lucide-react';
 import { Sidebar } from '@/src/components/Sidebar';
 import { AddressAutocomplete } from '@/src/components/AddressAutocomplete';
+import { usePlan } from '@/src/hooks/usePlan';
 
 export default function Settings() {
   const router = useRouter();
   const { user, signOut } = useAuth();
   const { client, updateClient } = useClient();
+  const { hasAccess } = usePlan();
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [locating, setLocating] = useState(false);
@@ -225,41 +229,51 @@ export default function Settings() {
                   verrouillage quand il passe près de votre commerce.
                 </p>
 
-                {/* Recherche d'adresse Google Maps */}
-                <div className="mb-2">
-                  <AddressAutocomplete onSelect={handleAddressSelect} />
-                </div>
+                {hasAccess ? (
+                  <>
+                    {/* Recherche d'adresse Google Maps */}
+                    <div className="mb-2">
+                      <AddressAutocomplete onSelect={handleAddressSelect} />
+                    </div>
 
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="flex-1 h-px bg-gray-100" />
-                  <span className="text-xs text-mist">ou</span>
-                  <div className="flex-1 h-px bg-gray-100" />
-                </div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="flex-1 h-px bg-gray-100" />
+                      <span className="text-xs text-mist">ou</span>
+                      <div className="flex-1 h-px bg-gray-100" />
+                    </div>
 
-                <button
-                  type="button"
-                  onClick={handleUseCurrentLocation}
-                  disabled={locating}
-                  className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-ink hover:border-matcha hover:text-matcha transition-all disabled:opacity-60"
-                >
-                  {locating ? <Loader2 size={16} className="animate-spin" /> : <Crosshair size={16} />}
-                  Utiliser ma position actuelle
-                </button>
-
-                {form.latitude != null && form.longitude != null && (
-                  <div className="flex items-center gap-2 mt-3 text-sm text-ink">
-                    <MapPin size={15} style={{ color: '#00704A' }} />
-                    <span style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '12px' }}>
-                      {form.latitude.toFixed(5)}, {form.longitude.toFixed(5)}
-                    </span>
                     <button
                       type="button"
-                      onClick={() => setForm(f => ({ ...f, latitude: null, longitude: null, store_address: '' }))}
-                      className="text-mist hover:text-error text-xs ml-1"
+                      onClick={handleUseCurrentLocation}
+                      disabled={locating}
+                      className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-ink hover:border-matcha hover:text-matcha transition-all disabled:opacity-60"
                     >
-                      Retirer
+                      {locating ? <Loader2 size={16} className="animate-spin" /> : <Crosshair size={16} />}
+                      Utiliser ma position actuelle
                     </button>
-                  </div>
+
+                    {form.latitude != null && form.longitude != null && (
+                      <div className="flex items-center gap-2 mt-3 text-sm text-ink">
+                        <MapPin size={15} style={{ color: '#00704A' }} />
+                        <span style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '12px' }}>
+                          {form.latitude.toFixed(5)}, {form.longitude.toFixed(5)}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setForm(f => ({ ...f, latitude: null, longitude: null, store_address: '' }))}
+                          className="text-mist hover:text-error text-xs ml-1"
+                        >
+                          Retirer
+                        </button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <Link href="/abonnement" className="flex items-center gap-2.5 rounded-xl p-3 transition-all hover:opacity-90"
+                    style={{ background: '#CBA25815', border: '1px solid #CBA258' }}>
+                    <Crown size={18} style={{ color: '#CBA258' }} />
+                    <span className="text-ink text-sm font-medium">Réservé au plan Pro — passer au Pro →</span>
+                  </Link>
                 )}
               </div>
 

@@ -7,6 +7,7 @@ import { useAuth } from '@/src/hooks/useAuth';
 import { useClient } from '@/src/hooks/useClient';
 import { useMembers } from '@/src/hooks/useMembers';
 import { usePunches } from '@/src/hooks/usePunches';
+import { usePlan } from '@/src/hooks/usePlan';
 import { Sidebar } from '@/src/components/Sidebar';
 import { StatCard } from '@/src/components/StatCard';
 import { getInitials, timeAgo } from '@/src/lib/utils';
@@ -19,6 +20,7 @@ export default function Dashboard() {
   const { client } = useClient();
   const { members } = useMembers();
   const { punches, todayCount, weeklyData } = usePunches();
+  const { hasAccess } = usePlan();
 
   const handleSignOut = async () => {
     await signOut();
@@ -36,6 +38,10 @@ export default function Dashboard() {
 
   const [exporting, setExporting] = useState<'csv' | 'xlsx' | null>(null);
   const handleExport = async (format: 'csv' | 'xlsx') => {
+    if (!hasAccess) {
+      toast.error('Les exports sont réservés au plan Pro.');
+      return;
+    }
     setExporting(format);
     try {
       const res = await fetch(`/api/stats/export?format=${format}`);

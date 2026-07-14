@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { updateLoyaltyClass, buildClassId } from '@/lib/google-wallet';
 import { createSupabaseServer } from '@/src/lib/supabase-server';
+import { planStatus } from '@/src/lib/plan';
 
 function getSupabase() {
   return createClient(
@@ -26,14 +27,14 @@ export async function PATCH(req: Request) {
     const supabase = getSupabase();
     const { data: client } = await supabase
       .from('clients')
-      .select('google_wallet_class_id,latitude,longitude')
+      .select('google_wallet_class_id,latitude,longitude,plan,trial_ends_at')
       .eq('id', user.id)
       .single();
 
     const classId = client?.google_wallet_class_id ?? buildClassId(user.id);
 
-    // Répercute la position du magasin (notifications de proximité) si définie
-    const locations = client?.latitude != null && client?.longitude != null
+    // Répercute la position du magasin (proximité) seulement si le plan le permet
+    const locations = planStatus(client).hasAccess && client?.latitude != null && client?.longitude != null
       ? [{ latitude: client.latitude, longitude: client.longitude }]
       : undefined;
 

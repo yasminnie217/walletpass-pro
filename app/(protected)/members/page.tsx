@@ -10,6 +10,7 @@ import { useAuth } from '@/src/hooks/useAuth';
 import { Sidebar } from '@/src/components/Sidebar';
 import { MemberRow } from '@/src/components/MemberRow';
 import { recordRedemption } from '@/src/lib/redemptions';
+import { usePlan } from '@/src/hooks/usePlan';
 import type { Member } from '@/src/types';
 
 export default function Members() {
@@ -130,8 +131,13 @@ export default function Members() {
     }
   };
 
+  const { hasAccess } = usePlan();
   const [exporting, setExporting] = useState<'csv' | 'xlsx' | null>(null);
   const handleExport = async (format: 'csv' | 'xlsx') => {
+    if (!hasAccess) {
+      toast.error('Les exports sont réservés au plan Pro.');
+      return;
+    }
     setExporting(format);
     try {
       const res = await fetch(`/api/members/export?format=${format}`);

@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
 import { createSupabaseServer } from '@/src/lib/supabase-server';
+import { clientHasAccess } from '@/src/lib/plan-server';
 
 function getSupabase() {
   return createClient(
@@ -30,6 +31,10 @@ export async function POST(req: Request) {
     }
 
     const supabase = getSupabase();
+
+    if (!(await clientHasAccess(supabase, clientId))) {
+      return Response.json({ error: 'plan_required' }, { status: 403 });
+    }
 
     const [{ data: clientData }, { data: members, error }] = await Promise.all([
       supabase.from('clients').select('logo_url').eq('id', clientId).single(),
