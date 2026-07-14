@@ -144,7 +144,7 @@ export default function Dashboard() {
           </div>
 
           {/* Chart + Feed */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
             {/* Chart */}
             <div className="xl:col-span-2 bg-white rounded-xl p-6 shadow-sm">
               <h2 className="text-ink font-semibold mb-4">Engagement hebdomadaire</h2>

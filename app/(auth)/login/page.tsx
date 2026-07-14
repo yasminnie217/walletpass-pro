@@ -134,7 +134,7 @@ export default function Login() {
       const res = await fetch('/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: forgotEmail, redirectTo: `${window.location.origin}/login` }),
+        body: JSON.stringify({ email: forgotEmail, redirectTo: `${window.location.origin}/auth/reset` }),
       });
       const data = await res.json();
 
