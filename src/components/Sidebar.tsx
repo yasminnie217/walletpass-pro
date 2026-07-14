@@ -27,9 +27,9 @@ function PlanBanner({ onNavigate }: { onNavigate?: () => void }) {
       style={{ background: 'rgba(203,162,88,0.15)', border: '1px solid rgba(203,162,88,0.4)' }}
     >
       <p className="text-xs font-semibold" style={{ color: '#CBA258' }}>
-        {isTrialing ? `Essai — ${trialDaysLeft} j restant${trialDaysLeft > 1 ? 's' : ''}` : 'Plan gratuit'}
+        {isTrialing ? `Essai — ${trialDaysLeft} j restant${trialDaysLeft > 1 ? 's' : ''}` : 'Essai terminé'}
       </p>
-      <p className="text-white/70 text-xs mt-0.5">Passer au Pro →</p>
+      <p className="text-white/70 text-xs mt-0.5">{isTrialing ? "S'abonner →" : 'Réactiver →'}</p>
     </Link>
   );
 }

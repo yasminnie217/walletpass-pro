@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useClient } from '@/src/hooks/useClient';
+import { planStatus } from '@/src/lib/plan';
 
 function Spinner() {
   return (
@@ -18,15 +19,23 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
   const { user, loading: authLoading } = useAuth();
   const { client, clientChecked } = useClient();
   const router = useRouter();
+  const pathname = usePathname();
+
+  const hasAccess = planStatus(client).hasAccess;
 
   useEffect(() => {
     if (authLoading) return;
     if (!user) { router.replace('/login'); return; }
     if (!clientChecked) return;
-    if (!client) router.replace('/onboarding');
-  }, [authLoading, user, clientChecked, client, router]);
+    if (!client) { router.replace('/onboarding'); return; }
+    // Essai terminé et pas d'abonnement → seule la page Abonnement reste accessible
+    if (!hasAccess && pathname !== '/abonnement') {
+      router.replace('/abonnement');
+    }
+  }, [authLoading, user, clientChecked, client, hasAccess, pathname, router]);
 
   if (authLoading || !user || !clientChecked || !client) return <Spinner />;
+  if (!hasAccess && pathname !== '/abonnement') return <Spinner />;
 
   return <>{children}</>;
 }

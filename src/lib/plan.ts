@@ -1,8 +1,7 @@
 // Logique d'abonnement partagée (client + serveur).
 
-export const FREE_MEMBER_CAP = 25;
 export const TRIAL_DAYS = 14;
-export const PRO_PRICE = '29 $/mois';
+export const PRO_PRICE = '200 $/mois';
 
 interface PlanFields {
   plan?: string | null;
