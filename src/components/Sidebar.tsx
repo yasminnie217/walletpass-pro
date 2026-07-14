@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Camera, CreditCard, Users, Bell, Settings } from 'lucide-react';
 
 const navItems = [
-  { href: '/', icon: LayoutDashboard, label: 'Tableau de bord', exact: true },
+  { href: '/dashboard', icon: LayoutDashboard, label: 'Tableau de bord', exact: true },
   { href: '/scanner', icon: Camera, label: 'Scanner' },
   { href: '/card', icon: CreditCard, label: 'Ma carte' },
   { href: '/members', icon: Users, label: 'Membres' },

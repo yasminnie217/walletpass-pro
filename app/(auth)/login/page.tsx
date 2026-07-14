@@ -49,7 +49,7 @@ export default function Login() {
         refresh_token: data.session.refresh_token,
       });
       if (error) throw error;
-      router.push('/');
+      router.push('/dashboard');
     } catch {
       toast.error('Une erreur est survenue. Réessayez.');
     } finally {

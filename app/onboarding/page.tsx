@@ -65,7 +65,7 @@ export default function Onboarding() {
   useEffect(() => {
     if (authLoading) return;
     if (!user) { router.replace('/login'); return; }
-    if (clientChecked && client) router.replace('/');
+    if (clientChecked && client) router.replace('/dashboard');
   }, [authLoading, user, clientChecked, client, router]);
 
   const set = (field: string, value: string | number) =>
@@ -119,12 +119,12 @@ export default function Onboarding() {
       }
 
       toast.success('Votre carte est prête! 🎉');
-      router.push('/');
+      router.push('/dashboard');
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       if (msg.includes('duplicate') || msg.includes('unique') || msg.includes('23505')) {
         toast.error('Un profil existe déjà pour ce compte.');
-        router.push('/');
+        router.push('/dashboard');
       } else if (msg.includes('violates row-level security') || msg.includes('42501')) {
         toast.error(`Erreur de permission: ${msg}`);
       } else {
