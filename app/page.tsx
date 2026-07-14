@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { SiteHeader } from '@/src/components/SiteHeader';
+import { SiteFooter } from '@/src/components/SiteFooter';
 
 export const metadata: Metadata = {
   title: 'Fidely — Cartes de fidélité numériques',
@@ -29,27 +31,7 @@ const features = [
 export default function Home() {
   return (
     <div style={{ background: '#F9F6F0', fontFamily: '"Inter", sans-serif', minHeight: '100vh' }}>
-      {/* Header */}
-      <header className="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold"
-            style={{ background: '#00704A' }}
-          >
-            F
-          </div>
-          <span className="text-lg font-bold text-ink" style={{ fontFamily: '"Playfair Display", serif' }}>
-            Fidely
-          </span>
-        </div>
-        <Link
-          href="/login"
-          className="px-5 py-2 rounded-full text-white text-sm font-medium transition-all hover:opacity-90"
-          style={{ background: '#00704A' }}
-        >
-          Espace commerçant
-        </Link>
-      </header>
+      <SiteHeader />
 
       {/* Hero */}
       <section className="max-w-3xl mx-auto px-6 pt-16 pb-14 text-center">
@@ -88,15 +70,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-gray-200">
-        <div className="max-w-5xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-mist text-sm">© 2026 Fidely. Tous droits réservés.</p>
-          <a href="mailto:yasmineschool10@gmail.com" className="text-mist text-sm hover:text-ink transition-colors">
-            yasmineschool10@gmail.com
-          </a>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
