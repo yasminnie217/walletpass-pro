@@ -247,7 +247,7 @@ export async function generateSaveUrl(objectParams: LoyaltyObjectParams): Promis
     aud: 'google',
     typ: 'savetowallet',
     iat: Math.floor(Date.now() / 1000),
-    origins: ['walletpass-pro2.vercel.app', 'localhost:3000'],
+    origins: ['fidelywallet.com', 'www.fidelywallet.com', 'walletpass-pro2.vercel.app', 'localhost:3000'],
     payload: { loyaltyObjects: [loyaltyObject] },
   };
 
