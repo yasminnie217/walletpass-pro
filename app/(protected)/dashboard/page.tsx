@@ -59,10 +59,10 @@ export default function Dashboard() {
     <div className="flex h-screen overflow-hidden" style={{ fontFamily: '"Inter", sans-serif' }}>
       <Sidebar />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden pt-14 md:pt-0">
         {/* Navbar */}
-        <header className="bg-white shadow-sm px-6 py-4 flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-3">
+        <header className="bg-white shadow-sm px-4 md:px-6 py-4 flex items-center justify-between flex-shrink-0">
+          <div className="hidden md:flex items-center gap-3">
             <div
               className="w-7 h-7 rounded-md flex items-center justify-center text-white font-bold text-xs"
               style={{ background: '#00704A' }}
@@ -73,8 +73,8 @@ export default function Dashboard() {
               Fidely
             </span>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="text-right">
+          <div className="flex items-center gap-3 ml-auto">
+            <div className="hidden sm:block text-right">
               <p className="text-sm font-medium text-ink">{client?.business_name || 'Mon Commerce'}</p>
               <p className="text-xs text-mist">{user?.email}</p>
             </div>
@@ -96,19 +96,19 @@ export default function Dashboard() {
         </header>
 
         {/* Main */}
-        <main className="flex-1 overflow-y-auto p-8" style={{ background: '#F9F6F0' }}>
+        <main className="flex-1 overflow-y-auto p-4 md:p-8" style={{ background: '#F9F6F0' }}>
           {/* Header */}
-          <div className="flex items-start justify-between mb-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-8">
             <div>
               <h1
-                className="text-3xl font-bold text-ink"
+                className="text-2xl sm:text-3xl font-bold text-ink"
                 style={{ fontFamily: '"Playfair Display", serif' }}
               >
                 Bienvenue, {firstName}
               </h1>
               <p className="text-mist mt-1">{"Voici ce qui se passe aujourd'hui."}</p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <button
                 onClick={() => handleExport('xlsx')}
                 disabled={exporting !== null}

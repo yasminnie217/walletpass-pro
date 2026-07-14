@@ -155,7 +155,7 @@ export default function Members() {
   return (
     <div className="flex h-screen overflow-hidden" style={{ fontFamily: '"Inter", sans-serif' }}>
       <Sidebar />
-      <main className="flex-1 overflow-y-auto p-8" style={{ background: '#F9F6F0' }}>
+      <main className="flex-1 overflow-y-auto p-4 pt-20 md:p-8" style={{ background: '#F9F6F0' }}>
         {/* Header */}
         <div className="flex items-start justify-between mb-6">
           <div>
@@ -175,7 +175,7 @@ export default function Members() {
         </div>
 
         {/* Search + Export */}
-        <div className="flex gap-3 mb-5">
+        <div className="flex flex-wrap gap-3 mb-5">
           <div className="flex-1 relative">
             <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-mist" />
             <input

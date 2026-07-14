@@ -110,7 +110,7 @@ export default function MemberDetail() {
   return (
     <div className="flex h-screen overflow-hidden" style={{ fontFamily: '"Inter", sans-serif' }}>
       <Sidebar />
-      <main className="flex-1 overflow-y-auto p-8" style={{ background: '#F9F6F0' }}>
+      <main className="flex-1 overflow-y-auto p-4 pt-20 md:p-8" style={{ background: '#F9F6F0' }}>
         {/* Back */}
         <button
           onClick={() => router.push('/members')}

@@ -8,7 +8,7 @@ export default function Scanner() {
   return (
     <div className="flex h-screen overflow-hidden" style={{ fontFamily: '"Inter", sans-serif' }}>
       <Sidebar />
-      <main className="flex-1 overflow-y-auto p-8" style={{ background: '#F9F6F0' }}>
+      <main className="flex-1 overflow-y-auto p-4 pt-20 md:p-8" style={{ background: '#F9F6F0' }}>
         <div className="max-w-lg mx-auto">
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-ink flex items-center gap-3" style={{ fontFamily: '"Playfair Display", serif' }}>
