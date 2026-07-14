@@ -7,7 +7,7 @@ self.addEventListener('fetch', () => {});
 
 self.addEventListener('push', (event) => {
   const data = event.data ? event.data.json() : {};
-  const title = data.title || 'WalletPass Pro';
+  const title = data.title || 'Fidely';
   const options = {
     body: data.body || '',
     icon: data.icon || '/favicon.svg',

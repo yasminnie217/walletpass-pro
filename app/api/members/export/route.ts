@@ -71,7 +71,7 @@ export async function GET(req: Request) {
 
   // ─── Excel ──────────────────────────────────────────────────────────────────
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'WalletPass Pro';
+  wb.creator = 'Fidely';
   wb.created = now;
   const ws = wb.addWorksheet('Membres', { views: [{ showGridLines: false }] });
   ws.columns = [

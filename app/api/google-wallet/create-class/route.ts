@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     await createLoyaltyClass({
       classId,
       programName: client.card_name || client.business_name || 'Carte Fidélité',
-      issuerName: client.organization_name || client.business_name || 'WalletPass Pro',
+      issuerName: client.organization_name || client.business_name || 'Fidely',
       logoUrl: client.logo_url || FALLBACK_LOGO,
       hexBackgroundColor: client.primary_color || '#00704A',
       locations,

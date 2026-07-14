@@ -111,10 +111,10 @@ export default function Join() {
             className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm"
             style={{ background: '#00704A' }}
           >
-            W
+            F
           </div>
           <span className="font-semibold text-ink" style={{ fontFamily: '"Playfair Display", serif' }}>
-            WalletPass Pro
+            Fidely
           </span>
         </div>
 

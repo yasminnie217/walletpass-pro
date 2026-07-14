@@ -67,10 +67,10 @@ export default function Dashboard() {
               className="w-7 h-7 rounded-md flex items-center justify-center text-white font-bold text-xs"
               style={{ background: '#00704A' }}
             >
-              W
+              F
             </div>
             <span className="font-semibold text-ink text-sm" style={{ fontFamily: '"Playfair Display", serif' }}>
-              WalletPass Pro
+              Fidely
             </span>
           </div>
           <div className="flex items-center gap-3">

@@ -3,7 +3,7 @@ import { Providers } from './providers';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'WalletPass Pro',
+  title: 'Fidely',
   description: 'Gérez vos cartes de fidélité digitales',
 };
 

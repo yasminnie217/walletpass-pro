@@ -37,7 +37,7 @@ export async function isPasswordPwned(pw: string): Promise<boolean> {
     const suffix = hash.slice(5);
 
     const res = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`, {
-      headers: { 'Add-Padding': 'true', 'User-Agent': 'WalletPass-Pro' },
+      headers: { 'Add-Padding': 'true', 'User-Agent': 'Fidely' },
     });
     if (!res.ok) return false;
 

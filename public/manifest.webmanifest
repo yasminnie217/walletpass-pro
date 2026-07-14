@@ -1,5 +1,5 @@
 {
-  "name": "WalletPass Caisse",
+  "name": "Fidely Caisse",
   "short_name": "Caisse",
   "description": "App caissier — scanner et gérer les cartes de fidélité",
   "start_url": "/caisse/scan",

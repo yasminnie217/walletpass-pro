@@ -11,7 +11,7 @@ export async function GET(req: Request) {
     const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=0&limit=5&q=${encodeURIComponent(q)}`;
     const res = await fetch(url, {
       headers: {
-        'User-Agent': 'WalletPassPro/1.0 (support@walletpass-pro2.vercel.app)',
+        'User-Agent': 'Fidely/1.0 (support@fidelywallet.com)',
         'Accept-Language': 'fr',
       },
     });

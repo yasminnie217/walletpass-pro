@@ -158,7 +158,7 @@ export default function Login() {
         <div className="w-full max-w-sm">
           <div className="flex flex-col items-center mb-8">
             <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-xl mb-3" style={{ background: '#00704A' }}>W</div>
-            <h1 className="text-2xl font-bold text-ink" style={{ fontFamily: '"Playfair Display", serif' }}>WalletPass Pro</h1>
+            <h1 className="text-2xl font-bold text-ink" style={{ fontFamily: '"Playfair Display", serif' }}>Fidely</h1>
           </div>
           <div className="bg-white rounded-2xl shadow-sm p-8 text-center">
             <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: '#00704A15' }}>
@@ -197,13 +197,13 @@ export default function Login() {
             className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-xl mb-3"
             style={{ background: '#00704A' }}
           >
-            W
+            F
           </div>
           <h1
             className="text-2xl font-bold text-ink"
             style={{ fontFamily: '"Playfair Display", serif' }}
           >
-            WalletPass Pro
+            Fidely
           </h1>
           <p className="text-mist text-sm mt-1">Gérez vos cartes de fidélité digitales</p>
         </div>
@@ -387,7 +387,7 @@ export default function Login() {
         </div>
 
         <p className="text-center text-mist text-xs mt-6">
-          © 2026 WalletPass Pro. Tous droits réservés.
+          © 2026 Fidely. Tous droits réservés.
         </p>
       </div>
     </div>

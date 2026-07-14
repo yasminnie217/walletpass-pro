@@ -169,13 +169,13 @@ export default function Onboarding() {
               className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold"
               style={{ background: '#00704A' }}
             >
-              W
+              F
             </div>
             <span
               className="text-xl font-bold text-ink"
               style={{ fontFamily: '"Playfair Display", serif' }}
             >
-              WalletPass Pro
+              Fidely
             </span>
           </div>
 

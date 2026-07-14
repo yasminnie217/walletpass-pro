@@ -111,7 +111,7 @@ export async function GET(req: Request) {
 
   // ─── Construction du classeur ──────────────────────────────────────────────
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'WalletPass Pro';
+  wb.creator = 'Fidely';
   wb.created = now;
 
   const ws = wb.addWorksheet('Statistiques', {

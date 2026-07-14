@@ -3,7 +3,7 @@ import { CaisseNav } from '@/src/components/CaisseNav';
 import { RegisterSW } from '@/src/components/RegisterSW';
 
 export const metadata: Metadata = {
-  title: 'WalletPass Caisse',
+  title: 'Fidely Caisse',
   manifest: '/manifest.webmanifest',
   appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Caisse' },
 };

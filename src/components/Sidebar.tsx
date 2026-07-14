@@ -28,10 +28,10 @@ export function Sidebar() {
             className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm"
             style={{ background: '#00704A' }}
           >
-            W
+            F
           </div>
           <span className="text-white font-semibold text-base" style={{ fontFamily: '"Playfair Display", serif' }}>
-            WalletPass Pro
+            Fidely
           </span>
         </div>
       </div>
@@ -59,7 +59,7 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="px-6 py-4 border-t border-white/10">
-        <p className="text-white/30 text-xs">© 2026 WalletPass Pro</p>
+        <p className="text-white/30 text-xs">© 2026 Fidely</p>
       </div>
     </aside>
   );

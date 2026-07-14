@@ -121,7 +121,7 @@ export default function Notifications() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-white text-sm font-semibold truncate">
-                        {title || 'WalletPass Pro'}
+                        {title || 'Fidely'}
                       </p>
                       <p className="text-white/70 text-xs mt-0.5 line-clamp-3">
                         {message || 'Votre message apparaîtra ici…'}

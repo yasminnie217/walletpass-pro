@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'WalletPass — Cartes de fidélité numériques',
+  title: 'Fidely — Cartes de fidélité numériques',
   description:
-    "WalletPass permet aux commerces de créer des cartes de fidélité numériques dans Google Wallet : tampons, récompenses, notifications et statistiques.",
+    "Fidely permet aux commerces de créer des cartes de fidélité numériques dans Google Wallet : tampons, récompenses, notifications et statistiques.",
 };
 
 const features = [
@@ -36,10 +36,10 @@ export default function Home() {
             className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold"
             style={{ background: '#00704A' }}
           >
-            W
+            F
           </div>
           <span className="text-lg font-bold text-ink" style={{ fontFamily: '"Playfair Display", serif' }}>
-            WalletPass
+            Fidely
           </span>
         </div>
         <Link
@@ -60,7 +60,7 @@ export default function Home() {
           La carte de fidélité de vos clients, dans leur téléphone
         </h1>
         <p className="text-mist text-lg mt-5 leading-relaxed">
-          WalletPass aide les commerces à créer des cartes de fidélité numériques dans Google Wallet.
+          Fidely aide les commerces à créer des cartes de fidélité numériques dans Google Wallet.
           Tampons, récompenses, notifications et statistiques — sans application à installer pour vos clients.
         </p>
         <div className="mt-8 flex items-center justify-center gap-3">
@@ -91,7 +91,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t border-gray-200">
         <div className="max-w-5xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-mist text-sm">© 2026 WalletPass. Tous droits réservés.</p>
+          <p className="text-mist text-sm">© 2026 Fidely. Tous droits réservés.</p>
           <a href="mailto:yasmineschool10@gmail.com" className="text-mist text-sm hover:text-ink transition-colors">
             yasmineschool10@gmail.com
           </a>
